@@ -1,0 +1,5 @@
+apiKey: sk-cjphvbeorznlqdlmizhfegsskjccmtxnjgcwiucwtsoyqedt
+cabinetStr: "\\d{1,3}[pPKGT][#\\w\\u4e00-\\u9fa5\\-]*(\u5C4F|\u67DC)\\d{0,1}"
+moveMod: Copy
+topRatio: 0.3
+withIndex: true

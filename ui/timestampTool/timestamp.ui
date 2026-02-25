@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>TimestampTranser</class>
+ <widget class="QWidget" name="TimestampTranser">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>950</width>
+    <height>530</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <widget class="QWidget" name="gridLayoutWidget">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>30</y>
+     <width>891</width>
+     <height>411</height>
+    </rect>
+   </property>
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <property name="sizeConstraint">
+     <enum>QLayout::SetMaximumSize</enum>
+    </property>
+    <item>
+     <widget class="QPlainTextEdit" name="plainTextEdit_src">
+      <property name="styleSheet">
+       <string notr="true">            QPlainTextEdit {
+                background-color: lightgray;
+                color: black;
+            }</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="pushButton">
+      <property name="text">
+       <string>trans
+--&gt;</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPlainTextEdit" name="plainTextEdit_dst">
+      <property name="styleSheet">
+       <string notr="true">            QPlainTextEdit {
+                background-color: lightgray;
+                color: black;
+            }</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>pushButton</sender>
+   <signal>clicked()</signal>
+   <receiver>TimestampTranser</receiver>
+   <slot>_trans()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>396</x>
+     <y>251</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>386</x>
+     <y>461</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>_trans()</slot>
+ </slots>
+</ui>

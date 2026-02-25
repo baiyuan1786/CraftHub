@@ -1,0 +1,20 @@
+1 . 启动iperf程序
+
+iperf 是endpoint到endpoint的网络测速工具，使用前需要启动两个endpoint的iperf服务
+手机上启动iperf 需要打开Magic iperf工具
+电脑上需要启动iperf.exe程序
+
+PC端iperf后台运行命令:
+iperf3.exe -s -D # 以服务器，守护模式运行iperf
+
+2. 跑流测试
+iperf启动完成后需要输命令来进行测试，命令格式比较复杂，这里挑两个简单的用:
+
+iperf3.exe -c 192.168.1.103 -f M -t 10 - R
+# 指定client为 192.168.1.103，自己作为server， 用逆转的方式测试，即server向client发送数据
+
+(运行命令的设备作为server)
+
+iperf3.exe -c 192.168.0.100 -f M -t 10 -P 10 -w 2M
+
+-c运行的时候，是将本sta作为客户端使用，此时另一端需要使用-s参数
