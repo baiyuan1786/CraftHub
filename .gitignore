@@ -8,3 +8,5 @@
 /launcher.zip
 test.py
 .vscode/
+**/data.yaml
+**/set.yaml

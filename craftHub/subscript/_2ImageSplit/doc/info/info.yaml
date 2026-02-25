@@ -1,7 +1,7 @@
+author: "\u8C37\u6CBC\u6865"
+enable: true
+link: void
 name: ImageSplit
-author: "谷沼桥"
-version: v1.0
-link: http://pha.tp-link.com.cn/T326787
-readme: "LogExtractor\u4F7F\u7528\u8BF4\u660Ev0.4.docx"
+readme: "SplitImage\u4F7F\u7528\u8BF4\u660E_V1.0.docx"
 type: logAnalyse
-enable: 1
+version: v1.0

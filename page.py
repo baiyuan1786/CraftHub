@@ -18,7 +18,15 @@ class Page(QWidget):
     4. remove 移除组件
     '''
     @abstractmethod
-    def __init__(self, title: str, dataPath: Optional[Path] = None):
+    def __init__(self,
+                 title: str,
+                 dataPath: Optional[Path] = None):
+        """页面初始化
+        继承至此类的其他类需要重写此方法
+
+        :param title: 页面标题
+        :param dataPath: 数据文件路径， 输入数据文件路径可以使用页面的自动属性保存方法 , defaults to None
+        """
         super().__init__()
         self.title = title
         self.dataPath = dataPath

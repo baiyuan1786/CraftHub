@@ -4,4 +4,4 @@
 ##########################################################################################################
 
 from .subscript import Subscript
-from .subscripts import gSubscriptMng
+from .subscripts import SubscriptsMng

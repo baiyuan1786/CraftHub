@@ -8,6 +8,7 @@ from page import Page
 from .tool import gLog, askDo, tryDo
 from .tool.timestampTool import TimestampTranser
 from .homePage import HomePage
+from .subscript import SubscriptsMng
 
 import os
 import shutil
@@ -149,6 +150,7 @@ class CraftHub(QMainWindow):
         
         act21.triggered.connect(lambda: HomePage(tab = self.TAB_main).open(tab = self.TAB_main))
         act22.triggered.connect(self.delCurTab)
+        act23.triggered.connect(lambda: SubscriptsMng().open(tab = self.TAB_main))
         
         act31.triggered.connect(lambda: TimestampTranser().open(tab = self.TAB_main))
 
@@ -158,7 +160,9 @@ class CraftHub(QMainWindow):
         act522.triggered.connect(partial(self._openFile, PATH_SERIAL_LOG_ROOT))
 
         readmeFiles = [fileName for fileName in os.listdir(PATH_README) 
-                    if fileName.endswith(self.readmeTypes)]
+                    if fileName.endswith(self.readmeTypes) and not fileName.startswith("~")]
+        
+        # 加载使用说明
         act6s = []
         for f in readmeFiles:
             act = QAction(f, self)
@@ -167,7 +171,6 @@ class CraftHub(QMainWindow):
             act.triggered.connect(
                 partial(self._openFile, filePath=filePath)
             )
-            
             act6s.append(act)
 
         # 添加菜单

@@ -50,7 +50,7 @@ class Room(QObject):
             d for d in datedImages 
             if abs((d.date - anchorDate).total_seconds()) <= cls.ANCHOR_RANGE
         ]
-        handleImages.sort(key = lambda d: d.date)
+        handleImages.sort(key = lambda d: abs((d.date - anchorDate).total_seconds()))
 
         # 从待处理照片当中搜寻名字
         for index, image in enumerate(handleImages):

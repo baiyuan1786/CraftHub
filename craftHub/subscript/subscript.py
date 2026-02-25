@@ -11,12 +11,15 @@
 #
 #   Authors:        BaiYuan <395642104@qq.com>
 ##########################################################################################################
+from ..tool.common import tryDo
 from page import Page
+from path import PATH_README
 
 import yaml
+import os
 from pathlib import Path
-from typing import Type
-from PyQt6.QtWidgets import QTabWidget
+from typing import Type, Optional
+from PyQt6.QtWidgets import QTabWidget, QRadioButton
 
 class Subscript():
     '''子脚本大类, 所有子脚本需要继承于此类'''
@@ -40,15 +43,16 @@ class Subscript():
 
         self.description: str = ""               # 简介
         self.name: str = name                    # 脚本名
-        self.author: str = "void"                # 作者
-        self.version: str = "void"               # 版本号
-        self.link: str = "void"                  # 链接
-        self.readme: str = "void"                # 使用说明名称
-        self.type: str = "void"                  # 类型(分类使用)
+        self.author: Optional[str] = None        # 作者
+        self.version: Optional[str] = None       # 版本号
+        self.link: Optional[str] = None          # 链接
+        self.readme: Optional[str] = None        # 使用说明名称
+        self.type: Optional[str] = None          # 类型(分类使用)
         self.enable: bool = True                 # 启用
         
         self.infoPath = infoPath            # info路径
         self.descriptionPath = descPath     # 描述路径
+        self.rootPath = infoPath.parent     # info上级路径
         
         try:
             # 加载描述参数
@@ -79,3 +83,38 @@ class Subscript():
         """
         myPage = self.pageCls(title = self.name)
         myPage.open(tab = tab)
+        
+    @tryDo(title = "打开Info")
+    def openInfo(self):
+        os.startfile(self.infoPath)
+        
+    @tryDo(title = "打开Description")
+    def openDesc(self):
+        os.startfile(self.descriptionPath)
+        
+    @tryDo(title = "打开readme")
+    def openReadme(self):
+        if self.readme is None:
+            raise ValueError("没有设置使用说明")
+        
+        os.startfile(PATH_README / self.readme)
+        
+    @tryDo(title = "打开根路径")
+    def openRoot(self):
+        os.startfile(self.rootPath)
+
+    def setEnabled(self, button: QRadioButton):
+        '''设置激活属性'''
+        
+        self.enable = (button.text() == "T")
+        
+        with self.infoPath.open(mode = "r", encoding = "utf-8") as f:
+            data: dict = yaml.safe_load(f)
+            
+        data["enable"] = self.enable
+
+        with self.infoPath.open(mode = "w", encoding = "utf-8") as f:
+            yaml.safe_dump(data, f)
+            
+
+

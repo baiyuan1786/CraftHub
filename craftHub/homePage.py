@@ -5,7 +5,7 @@
 from ui.home.Ui_home import Ui_Form
 from page import Page
 
-from .subscript import gSubscriptMng
+from .subscript import SubscriptsMng
 
 import random
 from typing import List
@@ -26,7 +26,7 @@ class HomePage(Page, Ui_Form):
         self._randomWelcome()
 
         # 插入脚本    
-        for index, script in enumerate(gSubscriptMng.gets()):
+        for index, script in enumerate(SubscriptsMng.gets(True)):
             
             # 创建序号标签 (NO)
             label_no = QLabel(str(index + 1))
@@ -82,18 +82,13 @@ class HomePage(Page, Ui_Form):
             "你的意志指引黎明, 你的高洁灼人双眼",
             "执拗的花朵，不会因为风暴褪去颜色",
             "自由的火，鼓动着黎明的歌",
-            "有些鸟儿是关不住的, 它的每一根羽毛都闪耀着自由的光辉",
             "人生是旷野，而非轨道",
-            "宁为自由之草，不做金笼之鸟",
-            "不能听命于自己者，就要受命于他人",
             "一旦选择相信 ，一切皆有可能"
         ]
         
         welcomeList += [
             "你累的时候，世界也愿意陪你歇一歇",
             "星星那么多，总有一颗在为你亮着",
-            "你不是孤岛，只是暂时退潮",
-            "努力是为了以后能好好偷懒"
         ]
         
         self.label_welcome.setText(random.choice(welcomeList))
