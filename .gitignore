@@ -3,7 +3,6 @@
 /doc/log/serial/*.log
 !/doc/log/hub/readme.txt
 !/doc/log/serial/readme.txt
-temp/
 /launcher/
 /dependence.zip
 /launcher.zip
