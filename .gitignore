@@ -10,3 +10,4 @@ test.py
 .vscode/
 **/data.yaml
 **/set.yaml
+edge_temp_profile/

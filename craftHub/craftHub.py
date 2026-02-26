@@ -7,6 +7,7 @@ from page import Page
 
 from .tool import gLog, askDo, tryDo
 from .tool.timestampTool import TimestampTranser
+from .tool.webProxy import ProxyBrowserLauncherGUI
 from .homePage import HomePage
 from .subscript import SubscriptsMng
 
@@ -130,6 +131,7 @@ class CraftHub(QMainWindow):
         act31 = QAction("Timestamp Tool", self)
         act32 = QAction("TFTP Tool", self)
         act33 = QAction("iperf Test", self)
+        act34 = QAction("WebProxy", self)
 
         act41 = QAction("Connect", self)
         act42 = QAction("Terminal Window", self)
@@ -152,7 +154,9 @@ class CraftHub(QMainWindow):
         act22.triggered.connect(self.delCurTab)
         act23.triggered.connect(lambda: SubscriptsMng().open(tab = self.TAB_main))
         
+        # 工具
         act31.triggered.connect(lambda: TimestampTranser().open(tab = self.TAB_main))
+        act34.triggered.connect(lambda: ProxyBrowserLauncherGUI().open(tab = self.TAB_main))
 
         act511.triggered.connect(partial(self._openFile, PATH_LOG_ROOT))
         act512.triggered.connect(gLog.open)
@@ -179,7 +183,7 @@ class CraftHub(QMainWindow):
 
         MENU_file.addActions((act11, act12, act13))
         MENU_page.addActions((act21, act22, act23))
-        MENU_tool.addActions((act31, act32, act33))
+        MENU_tool.addActions((act31, act32, act33, act34))
         MENU_terminal.addActions((act41, act42))
         MENU_log.addMenu(act51)
         MENU_log.addMenu(act52)

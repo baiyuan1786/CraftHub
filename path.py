@@ -10,7 +10,8 @@ from pathlib import Path
 
 # 工具根路径
 PATH_ROOT = Path(__file__).parent.resolve()
-PATH_SUBSCRIPT = PATH_ROOT / "craftHub" / "subscript"
+PATH_HUB_ROOT = PATH_ROOT / "craftHub"
+PATH_SUBSCRIPT = PATH_HUB_ROOT / "subscript"
 
 # 全局路径规划
 PATH_RESOURCE = PATH_ROOT / "doc"
