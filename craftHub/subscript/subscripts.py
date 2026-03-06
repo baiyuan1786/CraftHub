@@ -9,6 +9,7 @@ from ui.manager.Ui_manager import Ui_Form
 
 from ._1AutoRoute import AutoRoute
 from ._2ImageSplit import SplitImage
+from ._3surveyMaster import SurveyMaster
 
 from functools import partial
 from typing import List
@@ -41,6 +42,12 @@ class SubscriptsMng(Page, Ui_Form):
             subscriptList.append(SplitImage())
         except Exception as e:
             gLog.logInfo(f"Load \'SplitImage\' failed: {str(e)}")
+            
+        # 加载脚本3
+        try:
+            subscriptList.append(SurveyMaster())
+        except Exception as e:
+            gLog.logInfo(f"Load \'SurveyMaster\' failed: {str(e)}")
 
         if filter:
             return [s for s in subscriptList if s.enable]
