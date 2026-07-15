@@ -1,0 +1,10 @@
+# 该文件仅供作者测试打包使用
+pyinstaller --onedir subscript/pytool/pytool_v3/pytool.py
+pyinstaller --onedir subscript/ra_analyse/ra_analysev0.9.6/ra-analyse.py
+pyinstaller --onedir main.py --icon=F:\Tool\myTool\big\CraftHub_workspace\doc\png\cycle.ico --hidden-import=paddleocr
+
+pyinstaller --onedir main.py
+pyinstaller --onedir logAnalyze.py
+pyinstaller --onefile test.py
+pyinstaller --onedir seq_num_ba_sanity_v1.py
+

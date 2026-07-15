@@ -1,0 +1,15 @@
+**/__pycache__/
+/doc/log/hub/*.log
+/doc/log/serial/*.log
+!/doc/log/hub/readme.txt
+!/doc/log/serial/readme.txt
+/launcher/
+/dependence.zip
+/launcher.zip
+test.py
+/test
+.vscode/
+**/data.yaml
+**/set.yaml
+edge_temp_profile/
+/temp

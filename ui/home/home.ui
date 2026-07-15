@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>933</width>
+    <height>500</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <widget class="QWidget" name="gridLayoutWidget">
+   <property name="geometry">
+    <rect>
+     <x>60</x>
+     <y>20</y>
+     <width>821</width>
+     <height>411</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="1" column="7">
+     <widget class="QLabel" name="label_7">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">            QLabel {
+                font-size: 9px;       /* 字体大小 */
+                font-weight: bold;     /* 粗体 */
+                padding: 10px;         /* 内边距 */
+                border-radius: 10px;   /* 圆角 */
+                background-color: transparent; /* 淡蓝色背景 */
+            }</string>
+      </property>
+      <property name="text">
+       <string>Tool</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="0" colspan="8">
+     <widget class="QScrollArea" name="scrollArea">
+      <property name="widgetResizable">
+       <bool>true</bool>
+      </property>
+      <widget class="QWidget" name="scrollAreaWidgetContents">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>0</y>
+         <width>800</width>
+         <height>800</height>
+        </rect>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>800</height>
+        </size>
+       </property>
+       <widget class="QWidget" name="gridLayoutWidget_2">
+        <property name="geometry">
+         <rect>
+          <x>-1</x>
+          <y>-1</y>
+          <width>821</width>
+          <height>311</height>
+         </rect>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_scripts"/>
+       </widget>
+      </widget>
+     </widget>
+    </item>
+    <item row="1" column="1">
+     <widget class="QLabel" name="label_3">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">            QLabel {
+                font-size: 9px;       /* 字体大小 */
+                font-weight: bold;     /* 粗体 */
+                padding: 10px;         /* 内边距 */
+                border-radius: 10px;   /* 圆角 */
+                background-color: transparent; /* 淡蓝色背景 */
+            }</string>
+      </property>
+      <property name="text">
+       <string>ScriptName</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="6">
+     <widget class="QLabel" name="label_6">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">            QLabel {
+                font-size: 9px;       /* 字体大小 */
+                font-weight: bold;     /* 粗体 */
+                padding: 10px;         /* 内边距 */
+                border-radius: 10px;   /* 圆角 */
+                background-color: transparent; /* 淡蓝色背景 */
+            }</string>
+      </property>
+      <property name="text">
+       <string>Author</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="2">
+     <widget class="QLabel" name="label_4">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">            QLabel {
+                font-size: 9px;       /* 字体大小 */
+                font-weight: bold;     /* 粗体 */
+                padding: 10px;         /* 内边距 */
+                border-radius: 10px;   /* 圆角 */
+                background-color: transparent; /* 淡蓝色背景 */
+            }</string>
+      </property>
+      <property name="text">
+       <string>Version</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <widget class="QLabel" name="label_2">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">
+	
+            QLabel {
+                font-size: 9px;       /* 字体大小 */
+                font-weight: bold;     /* 粗体 */
+                padding: 10px;         /* 内边距 */
+                border-radius: 10px;   /* 圆角 */
+                background-color: transparent; /* 淡蓝色背景 */
+            }</string>
+      </property>
+      <property name="text">
+       <string>NO</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="3" colspan="3">
+     <widget class="QLabel" name="label_5">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">            QLabel {
+                font-size: 9px;       /* 字体大小 */
+                font-weight: bold;     /* 粗体 */
+                padding: 10px;         /* 内边距 */
+                border-radius: 10px;   /* 圆角 */
+                background-color: transparent; /* 淡蓝色背景 */
+            }</string>
+      </property>
+      <property name="text">
+       <string>Description</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="0" colspan="8">
+     <widget class="QLabel" name="label_welcome">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">
+            QLabel {
+                color: lightblue;           /* 文本颜色为蓝色 */
+                font-style: italic;    /* 斜体 */
+                font-size: 24px;       /* 字体大小 */
+                font-weight: bold;     /* 粗体 */
+                padding: 10px;         /* 内边距 */
+                border-radius: 10px;   /* 圆角 */
+                background-color: transparent; /* 淡蓝色背景 */
+            }
+</string>
+      </property>
+      <property name="text">
+       <string>CraftHub</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
