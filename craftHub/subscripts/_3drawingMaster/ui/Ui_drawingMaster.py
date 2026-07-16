@@ -169,7 +169,7 @@ class Ui_Form(object):
     def retranslateUi(self, Form):
         _translate = QtCore.QCoreApplication.translate
         Form.setWindowTitle(_translate("Form", "Form"))
-        self.lineEdit_netJump.setPlaceholderText(_translate("Form", "请输入组网链路表-跳纤链路表路径"))
+        self.lineEdit_netJump.setPlaceholderText(_translate("Form", "请输入跳纤链路表路径"))
         self.pushButton_trans.setText(_translate("Form", "Trans"))
         self.lineEdit_netJumpSheet.setPlaceholderText(_translate("Form", "请输入sheet名称"))
         self.pushButton_init.setText(_translate("Form", "init"))

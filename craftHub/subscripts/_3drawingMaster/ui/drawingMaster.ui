@@ -62,7 +62,7 @@
       <item row="4" column="1" colspan="2">
        <widget class="ExtendedLineEdit" name="lineEdit_netJump">
         <property name="placeholderText">
-         <string>请输入组网链路表-跳纤链路表路径</string>
+         <string>请输入跳纤链路表路径</string>
         </property>
        </widget>
       </item>

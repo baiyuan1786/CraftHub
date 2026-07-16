@@ -8,6 +8,7 @@ from ezdxf.layouts.blocklayout import BlockLayout
 from ezdxf.layouts.layout import Modelspace
 from ezdxf.math import Vec2
 
+from craftHub.tool import GLog
 
 class Attribute:
     '''增强属性, 增强属性是Insert类的属性'''
@@ -79,7 +80,9 @@ class Attribute:
 
         attDefPoint = self._attDefLocate(insert=insert)
         if attDefPoint is None:
-            raise ValueError(f"模板中没有属性 '{self.tag}'")
+            # raise ValueError(f"模板中没有属性 '{self.tag}'")
+            GLog.logInfo(f"模板中没有属性 '{self.tag}' 跳过插入")
+            return
 
         insertBasePoint = self._insertLocate(insert=insert)
         attribInsertPoint = attDefPoint + insertBasePoint + self.offset

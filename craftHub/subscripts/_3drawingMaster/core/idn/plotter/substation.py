@@ -187,7 +187,7 @@ class IDNsubPlotter:
         headNote = self.data.get("headNote")
         text = self.substationName
 
-        if headNote is not None:
+        if isinstance(headNote, str):
             text += f"({CADColor.colored(headNote)})"
 
         if not self.data.get("build"):
