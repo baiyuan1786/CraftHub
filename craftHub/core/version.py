@@ -8,5 +8,5 @@ class CraftHubVersion:
     '''CraftHub版本信息'''
 
     APP_NAME = "CraftHub"
-    APP_VERSION = "v0.9.0"
+    APP_VERSION = "v1.0.0"
     APP_AUTHOR = "BaiYuan <V:gzq395642104>"
