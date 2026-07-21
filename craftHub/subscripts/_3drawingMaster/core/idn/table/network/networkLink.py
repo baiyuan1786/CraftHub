@@ -69,7 +69,7 @@ class NetworkLinkTable:
             substaionNetLinkDF = pd.concat([substaionNetLinkDF, newFrame])
             
         # GCN网链路
-        if data.get("GCNTargetStation") is not None:
+        if data.get("GCNTargetStation"):
             GCNTargetStation = data.get("GCNTargetStation")
             terminateLayer = searcher.searchLayer(GCNTargetStation)
             if terminateLayer is None:

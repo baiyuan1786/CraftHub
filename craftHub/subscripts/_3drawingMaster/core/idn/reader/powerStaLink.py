@@ -47,7 +47,7 @@ class PowerStaLink:
             return ""
         
         valueStr = str(value).strip()
-        if valueStr.lower() == "nan":
+        if valueStr.lower() == "nan" or valueStr.lower() == "none":
             return ""
         
         return valueStr
@@ -62,7 +62,7 @@ class PowerStaLink:
         
         valueStr = PowerStaLink.cleanValue(value)
         
-        if valueStr == "":
+        if valueStr == "" or valueStr == "None":
             return None
         
         return valueStr

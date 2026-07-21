@@ -4,8 +4,6 @@
 #########################################################################################################
 from ezdxf.document import Drawing
 from ezdxf.entities.insert import Insert
-from ezdxf.layouts.blocklayout import BlockLayout
-from ezdxf.layouts.layout import Modelspace
 from ezdxf.math import Vec2
 
 from craftHub.tool import GLog

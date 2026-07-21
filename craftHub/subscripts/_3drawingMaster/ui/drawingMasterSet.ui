@@ -439,7 +439,7 @@
        <widget class="QLineEdit" name="lineEdit_idnConnection"/>
       </item>
       <item>
-       <widget class="QLabel" name="label_28">
+       <widget class="QLabel" name="label_29">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
           <horstretch>0</horstretch>
@@ -447,12 +447,12 @@
          </sizepolicy>
         </property>
         <property name="text">
-         <string>DDN面板图块名</string>
+         <string>DDN连接图块名</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="lineEdit_ddnPanel"/>
+       <widget class="QLineEdit" name="lineEdit_ddnConnection"/>
       </item>
      </layout>
     </item>
@@ -475,7 +475,7 @@
        <widget class="QLineEdit" name="lineEdit_idnPanel"/>
       </item>
       <item>
-       <widget class="QLabel" name="label_29">
+       <widget class="QLabel" name="label_28">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
           <horstretch>0</horstretch>
@@ -483,12 +483,12 @@
          </sizepolicy>
         </property>
         <property name="text">
-         <string>DDN连接图块名</string>
+         <string>DDN面板图块名</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="lineEdit_ddnConnection"/>
+       <widget class="QLineEdit" name="lineEdit_ddnPanel"/>
       </item>
      </layout>
     </item>

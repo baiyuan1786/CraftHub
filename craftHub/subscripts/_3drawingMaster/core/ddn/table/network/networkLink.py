@@ -66,6 +66,9 @@ class NetworkLinkTable:
         rowDataList = []
 
         for index, targetStation in enumerate(data.get("GCNTargetStationList"), 1):
+            if not isinstance(targetStation, str):
+                continue
+            
             terminateLayer = self.searcher.searchLayer(targetStation)
 
             if terminateLayer is None:

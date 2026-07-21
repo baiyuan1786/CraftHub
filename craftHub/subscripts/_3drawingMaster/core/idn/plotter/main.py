@@ -13,6 +13,7 @@ from pathlib import Path
 from ezdxf.document import Drawing
 from typing import List, Optional, Dict
 
+import numpy as np
 class IDNmainPlotter:
     '''idn主绘图器'''
     

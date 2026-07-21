@@ -159,11 +159,6 @@ class DataUnitIDN(DataUnit):
         assert lenGCNPnameList == lenGCN, f"GCNPnameList长度应为{lenGCN}，实际为{lenGCNPnameList}"
         assert lenGCNDevList == lenGCN, f"GCNDevList长度应为{lenGCN}，实际为{lenGCNDevList}"
         assert lenGCNPortList == lenGCN, f"GCNPortList长度应为{lenGCN}，实际为{lenGCNPortList}"
-        
-        if self.get("GCNTargetStation") is not None:
-            assert lenGCNPnameList > 0, f"GCNPnameList长度应大于0，实际为{lenGCNPnameList}"
-            assert lenGCNDevList > 0, f"GCNDevList长度应大于0，实际为{lenGCNDevList}"
-            assert lenGCNPortList > 0, f"GCNPortList长度应大于0，实际为{lenGCNPortList}"
             
         # 禁用同屏安装
         if self.get("installPnum") == self.get("DDNInstallPnum"):

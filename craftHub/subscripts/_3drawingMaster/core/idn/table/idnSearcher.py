@@ -15,6 +15,8 @@ class IDNSearcher:
 
         :param substationName: 搜索站名
         """    
+        if not isinstance(substationName, str):
+            return None
         
         # 从满表中搜索
         for data in self.dataUnitFullList:

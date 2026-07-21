@@ -163,8 +163,8 @@ class DrawingMasterCore:
 
         self.plotter = self._createPlotter()
         
-        for key, value in config.items():
-            GLog.logInfoWithNoTime(f"key: {key}, value: {value}")
+        #for key, value in config.items():
+            #GLog.logInfoWithNoTime(f"key: {key}, value: {value}")
 
         GLog.logInfo(f"{GLog.GREEN}绘图器 '{self.plotterName}' 初始化成功{GLog.END}")
 

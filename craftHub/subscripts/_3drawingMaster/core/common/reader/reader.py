@@ -223,6 +223,10 @@ class Reader:
         if col not in self.typeDict:
             raise ValueError(f"表格中缺少列 \'{col}\'")
         
+        # 全空，返回
+        if not any(self.dfDict[col]):
+            return 
+        
         assert self.typeDict[col] == wishType, f"列 \'{col}\' 的期望类型是 {wishType.name} 但实际类型是 {self.typeDict[col].name}"
 
     def parseColumn(self, df: DataFrame, col: str)->list:
