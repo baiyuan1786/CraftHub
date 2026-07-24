@@ -11,6 +11,7 @@ from pathlib import Path
 PATH_ROOT = Path(__file__).parent.resolve()
 PATH_HUB_ROOT = PATH_ROOT / "craftHub"
 PATH_SUBSCRIPT = PATH_HUB_ROOT / "subscripts"
+PATH_TOOL = PATH_HUB_ROOT / "tool"
 
 # 全局路径规划
 PATH_RESOURCE = PATH_ROOT / "doc"
