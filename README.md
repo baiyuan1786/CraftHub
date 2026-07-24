@@ -60,6 +60,8 @@ git clone https://github.com/baiyuan1786/CraftHub.git
 cd CraftHub
 ```
 
+如果克隆库提示无法访问信息， 例如 fatal: unable to access ，说明需要配置网络代理，你需要配置网络代理以使得能访问git库， 或者直接下载本工具zip
+
 已经配置 GitHub SSH 密钥的用户也可以使用 SSH 地址：
 
 ```bash
