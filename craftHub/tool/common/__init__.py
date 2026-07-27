@@ -7,3 +7,4 @@ from .log import GLog
 from .file import FileHander
 from .decorator import tryDo, askDo
 from .deepSeek_OCR import DeepSeekOCR_SiliconFlow
+from .extendLineEdit import ExtendedLineEdit

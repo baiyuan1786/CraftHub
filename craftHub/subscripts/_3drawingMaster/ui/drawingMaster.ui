@@ -310,7 +310,7 @@
   <customwidget>
    <class>ExtendedLineEdit</class>
    <extends>QLineEdit</extends>
-   <header>.extendLineEdit.h</header>
+   <header>....tool.common</header>
   </customwidget>
  </customwidgets>
  <resources/>

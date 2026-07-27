@@ -1,4 +1,4 @@
-# Form implementation generated from reading ui file 'e:\gzq\Tool\CraftHub\CraftHub_Cloud\CraftHub\craftHub\subscripts\_3drawingMaster\ui\drawingMaster.ui'
+# Form implementation generated from reading ui file 'e:\gzq\Tool\CraftHub\CraftHub_main\CraftHub\craftHub\subscripts\_3drawingMaster\ui\drawingMaster.ui'
 #
 # Created by: PyQt6 UI code generator 6.4.2
 #
@@ -195,4 +195,4 @@ class Ui_Form(object):
         self.label_6.setText(_translate("Form", "PowerLinkTable"))
         self.label_13.setText(_translate("Form", "SheetName"))
         self.lineEdit_powerLinkSheet.setPlaceholderText(_translate("Form", "请输入sheet名称"))
-from .extendLineEdit import ExtendedLineEdit
+from ....tool.common import ExtendedLineEdit

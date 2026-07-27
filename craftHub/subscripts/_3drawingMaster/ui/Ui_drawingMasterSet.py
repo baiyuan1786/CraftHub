@@ -502,4 +502,4 @@ class Ui_DMset(object):
         self.combobox_exportFormat.setPlaceholderText(_translate("DMset", "请选择导出格式"))
         self.pushButton_cancel.setText(_translate("DMset", "取消"))
         self.pushButton_save.setText(_translate("DMset", "保存"))
-from .extendLineEdit import ExtendedLineEdit
+from ....tool.common import ExtendedLineEdit
