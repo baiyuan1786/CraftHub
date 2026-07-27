@@ -1,12 +1,6 @@
 ##########################################################################################################
-#   Description: CraftHub版本信息
+#   Description: ddn读取器模块
 #   Authors:     BaiYuan <V:gzq395642104>
 ##########################################################################################################
-
-
-class CraftHubVersion:
-    '''CraftHub版本信息'''
-
-    APP_NAME = "CraftHub"
-    APP_VERSION = "v1.1.2"
-    APP_AUTHOR = "BaiYuan <V:gzq395642104>"
+from .dataUnit import DataUnitCabinet
+from .reader import ReaderCabinet

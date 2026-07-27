@@ -218,16 +218,6 @@ class AutoUcalculator:
             altitudeU=0
         )
 
-        replacedDevice = self._tryReplaceDevice(
-            newDevice=newDevice,
-            wishType="TR"
-        )
-
-        if replacedDevice is not None:
-            self.idfPosition = replacedDevice.altitudeU
-            self.deviceList.append(replacedDevice)
-            return replacedDevice
-
         idfPosition = self._tryInstallIDFAroundMainDevice()
 
         if idfPosition is None:
@@ -332,6 +322,11 @@ class AutoUcalculator:
                 raise ValueError(f"无法为{deviceName}找到合适的安装位置")
 
         else:
+            try:
+                altitudeU = int(altitudeU)
+            except Exception:
+                pass
+            
             if not isinstance(altitudeU, int):
                 raise ValueError(f"{deviceName}位置参数类型错误: {altitudeU}")
 

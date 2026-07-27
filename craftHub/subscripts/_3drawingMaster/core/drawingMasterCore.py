@@ -20,8 +20,10 @@ from .common.graph.line import LineTypeMnger
 from .common.table import TableInserter
 from .common.reader import DataUnit
 from .common.meta import Legend, FrameA3plus, FrameA3plusplus
+from .common.meta import IDN设备, DDN设备
 from .idn import IDNTableExporter, IDNmainPlotter
 from .ddn import DDNTableExporter, DDNmainPlotter
+from .cabinet import Cabinet_mainplt
 
 @dataclass(frozen=True)
 class OleTableConfig:
@@ -143,7 +145,13 @@ class DrawingMasterCore:
                 DDN_NET_LINK_TABLE_CONFIG,
                 DDN_CABLE_LAY_TABLE_CONFIG,
             )
+        ),
+        "屏柜绘图器": PlotterProfile(
+            plotterClass=Cabinet_mainplt,
+            tableExporterClass=None,
+            oleTableConfigList=()
         )
+        
     }
 
     def __init__(self, config: dict):
@@ -204,26 +212,40 @@ class DrawingMasterCore:
         
     def setBlockConfig(self, config: dict):
         '''设置所有块属性'''
-        # IDN属性
-        IDNmainPlotter.setBlockConfig(doc = self.doc, 
-                            devName = config["idnName"], 
-                            heightU = config["idnHeightU"], 
-                            panelBlockName = config["idnPanel"], 
-                            connectionBlockName = config["idnConnection"])
-        
-        # DDN属性
-        DDNmainPlotter.setBlockConfig(doc = self.doc, 
-                            devName = config["ddnName"], 
-                            heightU = config["ddnHeightU"], 
-                            panelBlockName = config["ddnPanel"], 
-                            connectionBlockName = config["ddnConnection"])
-        
-        # 图框属性
-        FrameA3plusplus.setFrameName(config["frameLeft"])
-        FrameA3plus.setFrameName(config["frameRight"])
-        
-        # 其他属性
-        Legend.setBlockName(config["legend"])
+
+        # 绘图器定义
+        if config[self.CONFIG_KEY_PLOTTER] in ["idn集成式绘图网络绘图器", "ddn定向式绘图网络绘图器"]:
+            IDNmainPlotter.setBlockConfig(doc = self.doc, 
+                                devName = config["idnName"], 
+                                heightU = config["idnHeightU"], 
+                                panelBlockName = config["idnPanel"], 
+                                connectionBlockName = config["idnConnection"])
+            
+            # DDN属性
+            DDNmainPlotter.setBlockConfig(doc = self.doc, 
+                                devName = config["ddnName"], 
+                                heightU = config["ddnHeightU"], 
+                                panelBlockName = config["ddnPanel"], 
+                                connectionBlockName = config["ddnConnection"])
+            
+            # 图框属性
+            FrameA3plusplus.setFrameName(config["frameLeft"])
+            FrameA3plus.setFrameName(config["frameRight"])
+            
+            # 其他属性
+            Legend.setBlockName(config["legend"])
+
+        elif config[self.CONFIG_KEY_PLOTTER] in ["屏柜绘图器"]:
+            IDN设备.setDeviceConfig(
+                deviceName = config["idnName"],
+                heightU = config["idnHeightU"],
+                blockName = None
+            )
+            DDN设备.setDeviceConfig(
+                deviceName = config["ddnName"],
+                heightU = config["ddnHeightU"],
+                blockName = None
+            )
         
 
     @staticmethod
