@@ -5,6 +5,9 @@
 
 import threading
 import time
+import ctypes
+import pywintypes
+import win32clipboard
 
 from typing import Any, Literal, Optional, Tuple
 
@@ -30,6 +33,8 @@ Attachment = Literal[
     8
 ]
 
+# 调试开关：强制模拟剪贴板内容不匹配
+DEBUG_FORCE_CLIPBOARD_MISMATCH = False
 
 class Inserter:
     '''Excel表格CAD插入器'''
@@ -68,6 +73,30 @@ class Inserter:
     OBJECT_CHECK_INTERVAL_SECONDS = 0.2
     CLIPBOARD_READY_WAIT_SECONDS = 0.5
     AUTO_CONFIRM_DELAY_SECONDS = 2.0
+    
+    # Windows标准剪贴板格式
+    CLIPBOARD_FORMAT_BITMAP = 2
+    CLIPBOARD_FORMAT_METAFILE_PICTURE = 3
+    CLIPBOARD_FORMAT_DIB = 8
+    CLIPBOARD_FORMAT_ENHANCED_METAFILE = 14
+    CLIPBOARD_FORMAT_DIB_V5 = 17
+
+    VECTOR_CLIPBOARD_FORMAT_SET = {
+        CLIPBOARD_FORMAT_METAFILE_PICTURE,
+        CLIPBOARD_FORMAT_ENHANCED_METAFILE
+    }
+
+    BITMAP_CLIPBOARD_FORMAT_SET = {
+        CLIPBOARD_FORMAT_BITMAP,
+        CLIPBOARD_FORMAT_DIB,
+        CLIPBOARD_FORMAT_DIB_V5
+    }
+
+    CLIPBOARD_CHECK_TIMEOUT_SECONDS = 3.0
+    CLIPBOARD_CHECK_INTERVAL_SECONDS = 0.05
+
+    CLIPBOARD_OPEN_RETRY_COUNT = 20
+    CLIPBOARD_OPEN_RETRY_INTERVAL_SECONDS = 0.05
 
     def __init__(
             self,
@@ -223,34 +252,261 @@ class Inserter:
             excelRange: Any,
             insertType: InsertType
     ) -> None:
-        '''按照指定格式复制Excel区域'''
+        '''按照指定格式复制Excel区域，并检查剪贴板结果'''
 
         workbook = self.worksheet.Parent
 
         workbook.Activate()
         self.worksheet.Activate()
 
+        # OLE嵌入使用普通Range.Copy。
+        # 当前CopyPicture兼容性问题不影响该模式。
         if insertType == self.INSERT_TYPE_OLE_EMBED:
             excelRange.Copy()
             return
 
+        # 矢量图和位图检查剪切板类型
         if insertType == self.INSERT_TYPE_XL_PICTURE:
-            excelRange.CopyPicture(
-                Appearance=self.XL_SCREEN,
-                Format=self.XL_PICTURE
+            pictureFormat = self.XL_PICTURE
+            expectedFormatSet = (
+                self.VECTOR_CLIPBOARD_FORMAT_SET
             )
-            return
 
-        if insertType == self.INSERT_TYPE_XL_BITMAP:
-            excelRange.CopyPicture(
-                Appearance=self.XL_SCREEN,
-                Format=self.XL_BITMAP
+        elif insertType == self.INSERT_TYPE_XL_BITMAP:
+            pictureFormat = self.XL_BITMAP
+            expectedFormatSet = (
+                self.BITMAP_CLIPBOARD_FORMAT_SET
             )
-            return
 
-        raise ValueError(
-            f"不支持的表格插入格式: {insertType}"
+        else:
+            raise ValueError(
+                f"不支持的表格插入格式: "
+                f"{insertType}"
+            )
+
+        # 必须先清空剪贴板。
+        # 否则上一次遗留的图片可能导致本次检查误判成功。
+        self._clearClipboard()
+
+        sequenceNumberBefore = (
+            self._getClipboardSequenceNumber()
         )
+
+        try:
+            excelRange.CopyPicture(
+                Appearance=self.XL_SCREEN,
+                Format=pictureFormat
+            )
+
+        except pywintypes.com_error as e:
+            raise RuntimeError(
+                f"Excel执行CopyPicture失败: "
+                f"insertType={insertType}, "
+                f"pictureFormat={pictureFormat}"
+            ) from e
+
+        if DEBUG_FORCE_CLIPBOARD_MISMATCH:
+            GLog.logInfo(
+                f"{GLog.YELLOW}"
+                f"调试模式：强制模拟CopyPicture剪贴板格式不匹配"
+                f"{GLog.END}"
+            )
+
+            copySucceeded = False
+
+        else:
+            copySucceeded = (
+                self._waitForClipboardFormat(
+                    sequenceNumberBefore=sequenceNumberBefore,
+                    expectedFormatSet=expectedFormatSet
+                )
+            )
+
+        if copySucceeded:
+            GLog.logInfo(
+                f"{GLog.GREEN}"
+                f"Excel表格复制成功，"
+                f"剪贴板中已检测到目标格式: "
+                f"insertType={insertType}"
+                f"{GLog.END}"
+            )
+
+            return
+
+        clipboardFormatList = (
+            self._getClipboardFormatList()
+        )
+
+        raise RuntimeError(
+            f"Excel表格复制失败："
+            f"CopyPicture执行后，"
+            f"剪贴板中未检测到对应图片格式；"
+            f"insertType={insertType}, "
+            f"期望格式={sorted(expectedFormatSet)}, "
+            f"实际格式={clipboardFormatList}",
+            f"可能是Excel版本不支持该方法，请尝试使用其他OLE类型插入"
+        )
+
+    def _waitForClipboardFormat(
+            self,
+            sequenceNumberBefore: int,
+            expectedFormatSet: set[int]
+    ) -> bool:
+        '''等待剪贴板更新并出现目标格式'''
+
+        deadline = (
+            time.monotonic()
+            + self.CLIPBOARD_CHECK_TIMEOUT_SECONDS
+        )
+
+        while time.monotonic() <= deadline:
+            sequenceNumberCurrent = (
+                self._getClipboardSequenceNumber()
+            )
+
+            sequenceChanged = (
+                sequenceNumberCurrent
+                != sequenceNumberBefore
+            )
+
+            expectedFormatAvailable = any(
+                self._isClipboardFormatAvailable(
+                    clipboardFormat=clipboardFormat
+                )
+                for clipboardFormat
+                in expectedFormatSet
+            )
+
+            if (
+                    sequenceChanged
+                    and expectedFormatAvailable
+            ):
+                return True
+
+            time.sleep(
+                self.CLIPBOARD_CHECK_INTERVAL_SECONDS
+            )
+
+        return False
+
+    @staticmethod
+    def _getClipboardSequenceNumber() -> int:
+        '''获取Windows剪贴板内容变化序号'''
+
+        return int(
+            ctypes.windll.user32
+            .GetClipboardSequenceNumber()
+        )
+
+    @staticmethod
+    def _isClipboardFormatAvailable(
+            clipboardFormat: int
+    ) -> bool:
+        '''检查剪贴板是否存在指定格式'''
+
+        return bool(
+            ctypes.windll.user32
+            .IsClipboardFormatAvailable(
+                int(clipboardFormat)
+            )
+        )
+
+    @classmethod
+    def _clearClipboard(cls) -> None:
+        '''清空Windows剪贴板'''
+
+        lastError: Optional[Exception] = None
+
+        for _ in range(
+                cls.CLIPBOARD_OPEN_RETRY_COUNT
+        ):
+            clipboardOpened = False
+
+            try:
+                win32clipboard.OpenClipboard()
+                clipboardOpened = True
+
+                win32clipboard.EmptyClipboard()
+
+                return
+
+            except Exception as e:
+                lastError = e
+
+                time.sleep(
+                    cls.CLIPBOARD_OPEN_RETRY_INTERVAL_SECONDS
+                )
+
+            finally:
+                if clipboardOpened:
+                    try:
+                        win32clipboard.CloseClipboard()
+                    except Exception:
+                        pass
+
+        raise RuntimeError(
+            f"无法清空Windows剪贴板: "
+            f"{lastError}"
+        )
+
+    @classmethod
+    def _getClipboardFormatList(
+            cls
+    ) -> list[int]:
+        '''获取剪贴板中的全部格式编号'''
+
+        formatList: list[int] = []
+        lastError: Optional[Exception] = None
+
+        for _ in range(
+                cls.CLIPBOARD_OPEN_RETRY_COUNT
+        ):
+            clipboardOpened = False
+
+            try:
+                win32clipboard.OpenClipboard()
+                clipboardOpened = True
+
+                currentFormat = 0
+
+                while True:
+                    currentFormat = (
+                        win32clipboard.EnumClipboardFormats(
+                            currentFormat
+                        )
+                    )
+
+                    if currentFormat == 0:
+                        break
+
+                    formatList.append(
+                        int(currentFormat)
+                    )
+
+                return formatList
+
+            except Exception as e:
+                lastError = e
+
+                time.sleep(
+                    cls.CLIPBOARD_OPEN_RETRY_INTERVAL_SECONDS
+                )
+
+            finally:
+                if clipboardOpened:
+                    try:
+                        win32clipboard.CloseClipboard()
+                    except Exception:
+                        pass
+
+        GLog.logInfo(
+            f"{GLog.YELLOW}"
+            f"读取剪贴板格式失败: "
+            f"{lastError}"
+            f"{GLog.END}"
+        )
+
+        return formatList
 
     def _pasteClipWithRetry(
             self,

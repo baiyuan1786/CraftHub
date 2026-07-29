@@ -7,7 +7,11 @@ import traceback
 
 import pythoncom
 
-from PyQt6.QtCore import QThread, pyqtSignal
+from PyQt6.QtCore import (
+    QThread,
+    pyqtSignal,
+    pyqtSlot
+)
 
 from .main import TableInserterMain
 
@@ -15,7 +19,15 @@ from .main import TableInserterMain
 class TableInserterWorker(QThread):
     '''表格插入器工作线程'''
 
+    insertStarted = pyqtSignal()
+
     succeeded = pyqtSignal(
+        int,
+        int,
+        int
+    )
+
+    stopped = pyqtSignal(
         int,
         int,
         int
@@ -30,19 +42,18 @@ class TableInserterWorker(QThread):
             self,
             tableInserterMain: TableInserterMain
     ) -> None:
-        """初始化表格插入器工作线程
-
-        :param tableInserterMain: 表格插入器业务主类
-        """
-
         super().__init__()
 
         self.tableInserterMain = (
             tableInserterMain
         )
 
+        self.tableInserterMain.setInsertStartedCallback(
+            self._emitInsertStarted
+        )
+
     def run(self) -> None:
-        '''在线程中执行完整表格插入流程'''
+        '''执行表格插入任务'''
 
         pythoncom.CoInitialize()
 
@@ -67,11 +78,22 @@ class TableInserterWorker(QThread):
                 for data in dataList
             )
 
-            self.succeeded.emit(
-                totalCount,
-                locatedCount,
-                insertedCount
-            )
+            if (
+                    self.tableInserterMain
+                    .wasStopped
+            ):
+                self.stopped.emit(
+                    totalCount,
+                    locatedCount,
+                    insertedCount
+                )
+
+            else:
+                self.succeeded.emit(
+                    totalCount,
+                    locatedCount,
+                    insertedCount
+                )
 
         except Exception as e:
             self.failed.emit(
@@ -80,4 +102,19 @@ class TableInserterWorker(QThread):
             )
 
         finally:
+            self.tableInserterMain.setInsertStartedCallback(
+                None
+            )
+
             pythoncom.CoUninitialize()
+
+    @pyqtSlot()
+    def requestStop(self) -> None:
+        '''请求停止后续表格插入'''
+
+        self.tableInserterMain.requestStop()
+
+    def _emitInsertStarted(self) -> None:
+        '''通知GUI已经进入逐个表格插入阶段'''
+
+        self.insertStarted.emit()

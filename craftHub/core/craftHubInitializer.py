@@ -153,7 +153,7 @@ class CraftHubInitializer:
         if logFile.stem == cls.README_FILE_STEM:
             return True
 
-        if logFile.stem == GLog.logPath.stem:
+        if logFile.stem == GLog.logPath.stem: # type: ignore
             return True
 
         return False

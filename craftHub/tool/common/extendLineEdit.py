@@ -13,7 +13,6 @@ from typing import Optional
 
 from .log import GLog
 
-
 class ExtendedLineEdit(QLineEdit):
     """带右键菜单的增强版QLineEdit"""
 

@@ -2,9 +2,10 @@
 #   Description: 表格插入器GUI页面
 #   Authors:     BaiYuan <V:gzq395642104>
 ##########################################################################################################
-
+import time
+import psutil
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, Set
 
 from PyQt6.QtGui import QDoubleValidator
 from PyQt6.QtWidgets import (
@@ -20,7 +21,7 @@ from .worker import TableInserterWorker
 from path import PATH_TOOL
 from craftHub.tool import GLog
 from page import Page
-
+from .excelProcessManager import ExcelProcessManager
 
 PATH_DATA = (
     PATH_TOOL
@@ -32,6 +33,16 @@ PATH_DATA = (
 
 class TableInserterPage(Page, Ui_Form):
     '''表格插入器GUI页面'''
+
+    EXCEL_PROCESS_NAME_SET = {
+        "excel.exe",
+        "et.exe"
+    }
+
+    WORKER_STOP_WAIT_MILLISECONDS = 2000
+    WORKER_CLEANUP_WAIT_MILLISECONDS = 3000
+
+    PROCESS_TERMINATE_WAIT_SECONDS = 2.0
 
     INSERT_MODE_FIXED_POINT = "fixedPoint"
     INSERT_MODE_SINGLE_SIGN = "singleSign"
@@ -63,6 +74,34 @@ class TableInserterPage(Page, Ui_Form):
 
     MAX_SIZE_VALUE = 1000000000.0
     SIZE_DECIMAL_COUNT = 6
+    
+    RUN_STATE_IDLE = "idle"
+    RUN_STATE_LOCATING = "locating"
+    RUN_STATE_INSERTING = "inserting"
+    RUN_STATE_STOPPING = "stopping"
+    
+    STOP_BUTTON_TEXT = "Stop"
+    STOPPING_BUTTON_TEXT = "正在停止..."
+    LOCATING_BUTTON_TEXT = "正在定位..."
+
+    STOP_BUTTON_STYLE = """
+    QPushButton {
+        background-color: #D32F2F;
+        color: white;
+        font-weight: bold;
+        border-radius: 3px;
+        padding: 4px 12px;
+    }
+
+    QPushButton:hover {
+        background-color: #B71C1C;
+    }
+
+    QPushButton:pressed {
+        background-color: #8E0000;
+    }
+    """
+    
 
     def __init__(self):
         # 初始化页面
@@ -74,6 +113,19 @@ class TableInserterPage(Page, Ui_Form):
 
         Ui_Form.__init__(self)
         self.setupUi(self)
+
+        self.runState = self.RUN_STATE_IDLE
+
+        self.insertButtonDefaultText = (
+            self.pushButton.text()
+        )
+
+        self.insertButtonDefaultStyle = (
+            self.pushButton.styleSheet()
+        )
+        
+        self.excelProcessGuardActive = False
+        self.isRemoving = False
 
         # 必须保存线程引用，防止线程运行过程中被回收
         self.insertWorker: Optional[
@@ -87,6 +139,70 @@ class TableInserterPage(Page, Ui_Form):
         self._updateInsertModeWidgets()
         self._updateSizeModeWidgets()
         self.load()
+    
+    def insertGUImain(self) -> None:
+        '''启动插入任务或请求停止当前任务'''
+
+        if (
+                self.runState
+                == self.RUN_STATE_INSERTING
+        ):
+            self._requestStop()
+            return
+
+        if self.runState in {
+                self.RUN_STATE_LOCATING,
+                self.RUN_STATE_STOPPING
+        }:
+            return
+
+        if (
+                self.insertWorker is not None
+                and self.insertWorker.isRunning()
+        ):
+            return
+
+
+        tableInserterMain = (
+            self._createTableInserterMain()
+        )
+
+        # 必须在Worker启动前记录。
+        ExcelProcessManager.record()
+
+        self.excelProcessGuardActive = True
+
+        self._setLocatingState()
+
+        self.insertWorker = (
+            TableInserterWorker(
+                tableInserterMain=(
+                    tableInserterMain
+                )
+            )
+        )
+
+        self.insertWorker.insertStarted.connect(
+            self._onInsertStarted
+        )
+
+        self.insertWorker.succeeded.connect(
+            self._onInsertSucceeded
+        )
+
+        self.insertWorker.stopped.connect(
+            self._onInsertStopped
+        )
+
+        self.insertWorker.failed.connect(
+            self._onInsertFailed
+        )
+
+        self.insertWorker.finished.connect(
+            self._onInsertFinished
+        )
+
+        self.insertWorker.start()
 
     def _initializeComboBoxes(self) -> None:
         '''初始化所有组合框选项'''
@@ -341,56 +457,54 @@ class TableInserterPage(Page, Ui_Form):
         for widget in widgetList:
             widget.setEnabled(enabled)
 
-    def insertGUImain(self) -> None:
-        '''读取GUI参数并启动表格插入线程'''
+    def _setLocatingState(self) -> None:
+        '''设置正在读取和定位状态'''
 
-        if (
-                self.insertWorker is not None
-                and self.insertWorker.isRunning()
-        ):
-            QMessageBox.warning(
-                self,
-                "任务正在运行",
-                "表格插入任务正在运行，请勿重复启动。"
-            )
+        self.runState = (
+            self.RUN_STATE_LOCATING
+        )
 
+        self.pushButton.setText(
+            self.LOCATING_BUTTON_TEXT
+        )
+
+        self.pushButton.setStyleSheet(
+            self.insertButtonDefaultStyle
+        )
+
+        self.pushButton.setEnabled(
+            False
+        )
+
+    def _requestStop(self) -> None:
+        '''请求停止后续表格插入'''
+
+        if self.insertWorker is None:
             return
 
-        try:
-            tableInserterMain = (
-                self._createTableInserterMain()
-            )
-
-        except Exception as e:
-            QMessageBox.critical(
-                self,
-                "输入参数错误",
-                str(e)
-            )
-
+        if not self.insertWorker.isRunning():
             return
 
-        self._setRunningState(
-            isRunning=True
+        self.insertWorker.requestStop()
+
+        self.runState = (
+            self.RUN_STATE_STOPPING
         )
 
-        self.insertWorker = TableInserterWorker(
-            tableInserterMain=tableInserterMain
+        self.pushButton.setText(
+            self.STOPPING_BUTTON_TEXT
         )
 
-        self.insertWorker.succeeded.connect(
-            self._onInsertSucceeded
+        self.pushButton.setEnabled(
+            False
         )
 
-        self.insertWorker.failed.connect(
-            self._onInsertFailed
+        GLog.logInfo(
+            f"{GLog.YELLOW}"
+            f"用户请求停止表格插入，"
+            f"当前表格处理完成后将结束任务"
+            f"{GLog.END}"
         )
-
-        self.insertWorker.finished.connect(
-            self._onInsertFinished
-        )
-
-        self.insertWorker.start()
 
     def _createTableInserterMain(
             self
@@ -672,6 +786,31 @@ class TableInserterPage(Page, Ui_Form):
                 self.INSERT_BUTTON_TEXT
             )
 
+    def _onInsertStarted(self) -> None:
+        '''定位完成后切换为停止按钮'''
+
+        if self.insertWorker is None:
+            return
+
+        if not self.insertWorker.isRunning():
+            return
+
+        self.runState = (
+            self.RUN_STATE_INSERTING
+        )
+
+        self.pushButton.setText(
+            self.STOP_BUTTON_TEXT
+        )
+
+        self.pushButton.setStyleSheet(
+            self.STOP_BUTTON_STYLE
+        )
+
+        self.pushButton.setEnabled(
+            True
+        )
+
     def _onInsertSucceeded(
             self,
             totalCount: int,
@@ -679,6 +818,9 @@ class TableInserterPage(Page, Ui_Form):
             insertedCount: int
     ) -> None:
         '''处理表格插入成功信号'''
+
+        if self.isRemoving:
+            return
 
         skippedCount = (
             totalCount
@@ -713,17 +855,64 @@ class TableInserterPage(Page, Ui_Form):
             f"{GLog.END}"
         )
 
+        if self.isRemoving:
+            return
+
         QMessageBox.critical(
             self,
             "表格插入失败",
             errorMessage
         )
 
-    def _onInsertFinished(self) -> None:
-        '''处理表格插入线程结束'''
+    def _onInsertStopped(
+            self,
+            totalCount: int,
+            locatedCount: int,
+            insertedCount: int
+    ) -> None:
+        '''显示主动停止后的插入结果'''
 
-        self._setRunningState(
-            isRunning=False
+        if self.isRemoving:
+            return
+
+        remainingCount = max(
+            totalCount - insertedCount,
+            0
+        )
+
+        QMessageBox.information(
+            self,
+            "表格插入已停止",
+            (
+                f"用户已停止后续表格插入。\n\n"
+                f"表格总数：{totalCount}\n"
+                f"成功定位：{locatedCount}\n"
+                f"已经插入：{insertedCount}\n"
+                f"未插入：{remainingCount}\n\n"
+                f"已经插入的CAD对象将被保留，"
+                f"请检查结果后手动保存图纸。"
+            )
+        )
+
+    def _onInsertFinished(self) -> None:
+        '''任务结束后恢复页面状态'''
+
+        self.excelProcessGuardActive = False
+
+        self.runState = (
+            self.RUN_STATE_IDLE
+        )
+
+        self.pushButton.setText(
+            self.insertButtonDefaultText
+        )
+
+        self.pushButton.setStyleSheet(
+            self.insertButtonDefaultStyle
+        )
+
+        self.pushButton.setEnabled(
+            True
         )
 
         if self.insertWorker is None:
@@ -733,3 +922,70 @@ class TableInserterPage(Page, Ui_Form):
         self.insertWorker = None
 
         worker.deleteLater()
+        
+    def removeRecall(self) -> None:
+        '''页面移除时停止任务并清理新增表格进程'''
+
+        self.isRemoving = True
+
+        worker = self.insertWorker
+
+        try:
+            if (
+                    worker is not None
+                    and worker.isRunning()
+            ):
+                GLog.logInfo(
+                    f"{GLog.YELLOW}"
+                    f"TableInserter页面正在关闭，"
+                    f"请求停止当前插入任务"
+                    f"{GLog.END}"
+                )
+
+                worker.requestStop()
+
+                # 先给Worker一定时间正常结束当前表格。
+                worker.wait(1500)
+
+            if (
+                    self.excelProcessGuardActive
+                    and worker is not None
+                    and worker.isRunning()
+            ):
+                GLog.logInfo(
+                    f"{GLog.YELLOW}"
+                    f"TableInserter工作线程尚未结束，"
+                    f"准备清理新增Excel与WPS进程"
+                    f"{GLog.END}"
+                )
+
+                ExcelProcessManager.kill()
+
+                # 进程被结束后，Worker中的COM操作通常会抛出异常，
+                # 随后进入finally并退出线程。
+                worker.wait(3000)
+
+            if (
+                    worker is not None
+                    and worker.isRunning()
+            ):
+                GLog.logInfo(
+                    f"{GLog.YELLOW}"
+                    f"Excel与WPS进程已强制完成清理",
+                    f"TableInserter工作线程未能及时退出，"
+                    f"CraftHub将继续执行关闭流程"
+                    f"{GLog.END}"
+                )
+
+        except Exception as e:
+            GLog.logInfo(
+                f"{GLog.YELLOW}"
+                f"TableInserter页面关闭清理失败: "
+                f"{e}"
+                f"{GLog.END}"
+            )
+
+        finally:
+            self.excelProcessGuardActive = False
+
+            super().removeRecall()

@@ -2,14 +2,12 @@
 #   Description: 屏柜绘图读取器
 #   Authors:     BaiYuan <V:gzq395642104>
 ##########################################################################################################
-
 from pathlib import Path
 
 from craftHub.tool import GLog
 
 from ...common.reader import Reader, ExcelValueType
 from .dataUnit import DataUnitCabinet
-
 
 class ReaderCabinet(Reader):
     '''屏柜绘图读取器'''

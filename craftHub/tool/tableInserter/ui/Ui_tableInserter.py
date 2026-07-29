@@ -136,7 +136,7 @@ class Ui_Form(object):
         _translate = QtCore.QCoreApplication.translate
         Form.setWindowTitle(_translate("Form", "Form"))
         self.label_14.setText(_translate("Form", "maxHeight"))
-        self.label_11.setText(_translate("Form", "sizeMod"))
+        self.label_11.setText(_translate("Form", "sizeMode"))
         self.label_10.setText(_translate("Form", "oleType"))
         self.comboBox_oleType.setPlaceholderText(_translate("Form", "请选择ole类型"))
         self.label_6.setText(_translate("Form", "insertMode"))

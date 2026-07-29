@@ -198,6 +198,7 @@ class Page(QWidget):
         '''完全移除此组件'''
 
         self.save()
+        self.removeRecall() # 移除回调
 
         for child in self.findChildren(QWidget):
             try:
@@ -237,6 +238,10 @@ class Page(QWidget):
             raise FileNotFoundError(f"{notFoundStr}: {path}")
 
         return path
+    
+    def removeRecall(self):
+        '''强制关闭时将触发此方法，子类可实现'''
+        pass
 
     def _collectWidgetData(self) -> Dict[str, Any]:
         '''收集页面控件数据'''

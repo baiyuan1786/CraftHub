@@ -5,12 +5,12 @@
 
 import gc
 import time
+import threading
 
 from pathlib import Path
-from typing import List, Literal, Optional
+from typing import List, Literal, Optional, Callable
 
 import ezdxf
-import psutil
 import win32com.client
 
 from craftHub.tool import GLog
@@ -20,7 +20,7 @@ from .data import Data
 from .inserter import Inserter
 from .reader import Reader
 from .sizeAdjuster import SizeAdjuster
-
+from .excelProcessManager import ExcelProcessManager
 
 Attachment = Literal[2, 4, 6, 8]
 
@@ -93,7 +93,6 @@ class TableInserterMain:
     CAD_READY_WAIT_SECONDS = 2.0
 
     EXCEL_PROCESS_EXIT_WAIT_SECONDS = 2.0
-    EXCEL_PROCESS_TERMINATE_TIMEOUT_SECONDS = 3.0
 
     TAG_PLACEHOLDER = "{tag}"
 
@@ -175,8 +174,20 @@ class TableInserterMain:
         self.searchBlockReference = bool(
             searchBlockReference
         )
+        
+        self._stopEvent = threading.Event() # 停止事件
+
+        self._insertStartedCallback: Optional[
+            Callable[[], None]
+        ] = None
+
+        self.wasStopped = False
+            
     def run(self) -> List[Data]:
         '''执行完整表格插入流程'''
+
+        self._stopEvent.clear()
+        self.wasStopped = False
 
         return self.insert()
 
@@ -220,6 +231,9 @@ class TableInserterMain:
         self._locateDataList(
             dataList=dataList
         )
+        
+        # 定位全部完成，准备进入逐个表格插入阶段
+        self._notifyInsertStarted()
 
         self._insertDataList(
             dataList=dataList
@@ -257,6 +271,32 @@ class TableInserterMain:
         )
 
         return dataList
+
+    def requestStop(self) -> None:
+        '''请求停止后续表格插入'''
+
+        self._stopEvent.set()
+
+    def isStopRequested(self) -> bool:
+        '''检查是否已经收到停止请求'''
+
+        return self._stopEvent.is_set()
+
+    def setInsertStartedCallback(
+            self,
+            callback: Optional[Callable[[], None]]
+    ) -> None:
+        '''设置开始逐表插入时的回调函数'''
+
+        self._insertStartedCallback = callback
+
+    def _notifyInsertStarted(self) -> None:
+        '''通知工作线程已经进入逐表插入阶段'''
+
+        if self._insertStartedCallback is None:
+            return
+
+        self._insertStartedCallback()
 
     def _validateParameters(self) -> None:
         '''检查表格插入参数'''
@@ -407,6 +447,20 @@ class TableInserterMain:
                 )
             )
 
+    def _validateAttachment(
+            self,
+            attachment: int,
+            parameterName: str
+    ) -> None:
+        '''检查方向参数是否合法'''
+
+        if attachment not in self.VALID_ATTACHMENT_SET:
+            raise ValueError(
+                f"{parameterName}方向不合法: "
+                f"{attachment}; "
+                f"仅支持8、4、2、6"
+            )
+
     def _readDataList(self) -> List[Data]:
         '''读取Excel并生成Data列表'''
 
@@ -489,65 +543,11 @@ class TableInserterMain:
                 f"{GLog.END}"
             )
 
-    def _getLocateSign(
-            self,
-            data: Data
-    ) -> tuple[Optional[str], Optional[str]]:
-        '''根据插入模式获取定位标记'''
-
-        if (
-                self.insertMode
-                == self.INSERT_MODE_FIXED_POINT
-        ):
-            return None, None
-
-        if (
-                self.insertMode
-                == self.INSERT_MODE_SINGLE_SIGN
-        ):
-            return data.tag, None
-
-        if (
-                self.insertMode
-                == self.INSERT_MODE_DOUBLE_SIGN
-        ):
-            return (
-                data.tag,
-                self._resolveSign(
-                    sign=self.sign2,
-                    data=data
-                )
-            )
-
-        raise ValueError(
-            f"未知插入模式: "
-            f"{self.insertMode}"
-        )
-
-    def _resolveSign(
-            self,
-            sign: Optional[str],
-            data: Data
-    ) -> Optional[str]:
-        '''解析当前Data对应的第二定位标记'''
-
-        if sign is None:
-            return None
-
-        return sign.replace(
-            self.TAG_PLACEHOLDER,
-            data.tag
-        )
-
     def _insertDataList(
             self,
             dataList: List[Data]
     ) -> None:
         '''打开Excel和AutoCAD并插入所有Data'''
-
-        excelPIDSetBefore = (
-            self._getExcelPIDSet()
-        )
 
         excel = None
         workbook = None
@@ -605,10 +605,24 @@ class TableInserterMain:
                 sizeAdjuster=sizeAdjuster
             )
 
+            # 逐个插入表格
             for index, data in enumerate(
                     dataList,
                     start=1
             ):
+                if self.isStopRequested():
+                    self.wasStopped = True
+
+                    GLog.logInfo(
+                        f"{GLog.YELLOW}"
+                        f"收到停止请求，结束后续表格插入；"
+                        f"当前进度="
+                        f"{index - 1}/{len(dataList)}"
+                        f"{GLog.END}"
+                    )
+
+                    break
+                
                 GLog.logInfo(
                     f"{GLog.BLUE}"
                     f"正在插入表格 "
@@ -686,26 +700,7 @@ class TableInserterMain:
 
             gc.collect()
 
-            excelPIDSetAfter = (
-                self._getExcelPIDSet()
-            )
-
-            excelPIDSetNew = (
-                excelPIDSetAfter
-                - excelPIDSetBefore
-            )
-
-            if excelPIDSetNew:
-                GLog.logInfo(
-                    f"{GLog.YELLOW}"
-                    f"检测到新增残留Excel进程: "
-                    f"{excelPIDSetNew}"
-                    f"{GLog.END}"
-                )
-
-                self._killExcelPIDSet(
-                    pidSet=excelPIDSetNew
-                )
+            ExcelProcessManager.kill()
 
             # 释放本线程中的AutoCAD COM代理，
             # 但不向AutoCAD发送保存、关闭或退出命令。
@@ -727,6 +722,56 @@ class TableInserterMain:
                     f"已完成内容尚未保存"
                     f"{GLog.END}"
                 )
+
+    def _getLocateSign(
+            self,
+            data: Data
+    ) -> tuple[Optional[str], Optional[str]]:
+        '''根据插入模式获取定位标记'''
+
+        if (
+                self.insertMode
+                == self.INSERT_MODE_FIXED_POINT
+        ):
+            return None, None
+
+        if (
+                self.insertMode
+                == self.INSERT_MODE_SINGLE_SIGN
+        ):
+            return data.tag, None
+
+        if (
+                self.insertMode
+                == self.INSERT_MODE_DOUBLE_SIGN
+        ):
+            return (
+                data.tag,
+                self._resolveSign(
+                    sign=self.sign2,
+                    data=data
+                )
+            )
+
+        raise ValueError(
+            f"未知插入模式: "
+            f"{self.insertMode}"
+        )
+
+    def _resolveSign(
+            self,
+            sign: Optional[str],
+            data: Data
+    ) -> Optional[str]:
+        '''解析当前Data对应的第二定位标记'''
+
+        if sign is None:
+            return None
+
+        return sign.replace(
+            self.TAG_PLACEHOLDER,
+            data.tag
+        )
 
     def _createSizeAdjuster(
             self
@@ -777,20 +822,6 @@ class TableInserterMain:
             f"{lastError}"
         )
 
-    def _validateAttachment(
-            self,
-            attachment: int,
-            parameterName: str
-    ) -> None:
-        '''检查方向参数是否合法'''
-
-        if attachment not in self.VALID_ATTACHMENT_SET:
-            raise ValueError(
-                f"{parameterName}方向不合法: "
-                f"{attachment}; "
-                f"仅支持8、4、2、6"
-            )
-
     @staticmethod
     def _validatePositiveNumber(
             value: Optional[float],
@@ -818,104 +849,6 @@ class TableInserterMain:
             )
 
         return numberValue
-
-    @staticmethod
-    def _getExcelPIDSet() -> set[int]:
-        '''获取当前全部Excel进程PID'''
-
-        pidSet: set[int] = set()
-
-        for process in psutil.process_iter(
-                ["pid", "name"]
-        ):
-            try:
-                processName = (
-                    process.info["name"]
-                )
-
-                if (
-                        processName
-                        and processName.lower()
-                        == "excel.exe"
-                ):
-                    pidSet.add(
-                        int(
-                            process.info["pid"]
-                        )
-                    )
-
-            except (
-                    psutil.NoSuchProcess,
-                    psutil.AccessDenied,
-                    psutil.ZombieProcess
-            ):
-                continue
-
-            except Exception:
-                continue
-
-        return pidSet
-
-    @classmethod
-    def _killExcelPIDSet(
-            cls,
-            pidSet: set[int]
-    ) -> None:
-        '''结束指定Excel进程'''
-
-        for pid in pidSet:
-            try:
-                if not psutil.pid_exists(pid):
-                    continue
-
-                process = psutil.Process(pid)
-
-                if (
-                        process.name().lower()
-                        != "excel.exe"
-                ):
-                    continue
-
-                GLog.logInfo(
-                    f"{GLog.YELLOW}"
-                    f"结束新增残留Excel进程: "
-                    f"PID={pid}"
-                    f"{GLog.END}"
-                )
-
-                process.terminate()
-
-                try:
-                    process.wait(
-                        timeout=(
-                            cls.EXCEL_PROCESS_TERMINATE_TIMEOUT_SECONDS
-                        )
-                    )
-
-                except psutil.TimeoutExpired:
-                    process.kill()
-
-                    process.wait(
-                        timeout=(
-                            cls.EXCEL_PROCESS_TERMINATE_TIMEOUT_SECONDS
-                        )
-                    )
-
-            except (
-                    psutil.NoSuchProcess,
-                    psutil.AccessDenied,
-                    psutil.ZombieProcess
-            ):
-                continue
-
-            except Exception as e:
-                GLog.logInfo(
-                    f"{GLog.YELLOW}"
-                    f"结束Excel进程失败: "
-                    f"PID={pid}, "
-                    f"错误={e}"
-                    f"{GLog.END}"
-                )
 
     @staticmethod
     def _clearClipboard() -> None:
