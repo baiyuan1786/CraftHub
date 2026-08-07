@@ -11,7 +11,8 @@ from .....subPath import PATH_TEMPLATE_DIR
 class A3plusIntroduction(NewBlock):
     '''A3+图纸说明, 右下角的那个小说明'''
     def __init__(self, 
-                 doc:Drawing) -> None:
+                 doc:Drawing,
+                 board: bool = False) -> None:
         
         # 不使用复制块了
         super().__init__(doc)
@@ -21,10 +22,13 @@ class A3plusIntroduction(NewBlock):
         textContent += "2. 各设备接地线由设备供应商提供。新增带电设备需可靠接地,经机房接地条连接至接地网。\n"
         textContent += "3. 具体线缆敷设以现场施工为准；具体使用端口号以调度中心批复为准。"
 
+        if board:
+            textContent += CADColor.colored("\n4. 端口出线原则：每块板卡，单模短距光口(10km)统一按端口编号0→N正序出线（尾纤优先从0号口起敷设）；电口统一按端口编号9→0倒序出线（网线优先从9号口起敷设）。")
+
         self.addMtext(
             textContent = textContent,
             textFontHeight = 4,
-            textWidth = 140,
+            textWidth = 148,
             textColor = CADColor.toIndex("白色"),
             textLineSpacingDistance = 1,
             insertPoint = Vec2(0, 0),

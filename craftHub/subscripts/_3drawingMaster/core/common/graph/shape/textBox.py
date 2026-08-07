@@ -3,6 +3,11 @@
 #                暂时不支持配置字体样式和线形，后面再修改
 #   Authors:     BaiYuan <V:gzq395642104>
 ##########################################################################################################
+from typing import Any
+
+from ezdxf.layouts.blocklayout import BlockLayout
+from ezdxf.layouts.layout import Modelspace
+
 from .block import CustomBlock
 
 from ..line import 现有设备
@@ -29,7 +34,9 @@ class TextBox(CustomBlock):
                  textFontHeight: float = 1.98,
                  textLineSpacingDistance: float = 1,
                  textColor: int = CADColor.toIndex("白色"),
-                 textStyle: str = "天联"
+                 textStyle: str = "天联",
+                 textRotation: int = 0,
+                 textAttachment: int = 5
                  ):
         """初始化BoxWithText对象
         该块创建之后以块来维护对象
@@ -44,6 +51,7 @@ class TextBox(CustomBlock):
         :param textLineSpacingDistance: 行间距, defaults to 1
         :param textColor:               文本框颜色
         :param textStyle                字体样式， 必须选择存在的字体样式, 否则报错
+        :param textRotation:            文本框旋转角度
         """         
         super().__init__(doc)
         insertPoint = Vec2(0, 0)
@@ -55,6 +63,9 @@ class TextBox(CustomBlock):
             insertPoint = insertPoint
         )
         
+        self.boxWidth = boxWidth
+        self.boxHeight = boxHeight
+        
         # 插入文本框
         self.addMtext(
             textContent = textContent,
@@ -63,5 +74,12 @@ class TextBox(CustomBlock):
             textColor = textColor,
             textLineSpacingDistance = textLineSpacingDistance,
             style = textStyle, # 默认使用天联字体
-            insertPoint = insertPoint + Vec2(boxWidth // 2, boxHeight // 2)
+            insertPoint = insertPoint + Vec2(boxWidth / 2, boxHeight / 2),
+            rotation = textRotation,
+            attachment = textAttachment
         )
+        
+    def insertIntoMid(self, layout: BlockLayout | Modelspace | Any, insertPoint: Vec2 | None = None):
+        '''使用中心点插入'''
+        insertPoint -= Vec2(self.boxWidth / 2, self.boxHeight / 2)
+        return super().insertInto(layout, insertPoint)

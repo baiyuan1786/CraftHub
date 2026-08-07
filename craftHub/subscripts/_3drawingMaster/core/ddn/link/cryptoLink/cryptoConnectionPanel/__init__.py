@@ -5,4 +5,5 @@
 from .cryptoDevConnectionPanel import CDConnectionPanel
 from .cryptoIDFconnectionPanel import CDIDFConnectionPanel
 from .accessSwitchConnectionPanel import AccessSwitchConnectionPanel
+from .cdRoomConnectedIDFConnectionPanel import CDroomConnectedIDFConnectionPanel
 

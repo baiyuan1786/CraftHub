@@ -3,7 +3,7 @@
 #   Authors:     BaiYuan <V:gzq395642104>
 ##########################################################################################################
 
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
 from ezdxf.document import Drawing
 from ezdxf.layouts.blocklayout import BlockLayout
@@ -15,6 +15,9 @@ from .....common.graph import 现有设备, 本期新增网线
 
 class CDIDFConnectionPanel(NewBlock):
     '''纵向加密IDF连接面板图'''
+
+    DIRECTION_LEFT = "left"
+    DIRECTION_RIGHT = "right"
 
     WIDTH = 42
     HEIGHT = 21
@@ -45,12 +48,15 @@ class CDIDFConnectionPanel(NewBlock):
             cls,
             insertX: float,
             rtLinkPoint: Vec2,
-            nrtLinkPoint: Vec2
+            nrtLinkPoint: Vec2,
+            direction: Literal["left", "right"] = "left"
     ) -> Vec2:
         '''根据实时/非实时接入点反算IDF插入点'''
 
-        rtInsertY = rtLinkPoint.y - cls._rtPointFrontLocalStatic().y
-        nrtInsertY = nrtLinkPoint.y - cls._nrtPointFrontLocalStatic().y
+        cls._checkDirection(direction)
+
+        rtInsertY = rtLinkPoint.y - cls._rtPointFrontLocalStatic(direction).y
+        nrtInsertY = nrtLinkPoint.y - cls._nrtPointFrontLocalStatic(direction).y
 
         if abs(rtInsertY - nrtInsertY) > cls.ALIGN_TOLERANCE:
             raise ValueError(
@@ -62,27 +68,91 @@ class CDIDFConnectionPanel(NewBlock):
         return Vec2(insertX, (rtInsertY + nrtInsertY) / 2)
 
     @classmethod
-    def _rtPointFrontLocalStatic(cls) -> Vec2:
-        '''获取实时纵向加密端口前点局部坐标'''
+    def _checkDirection(
+            cls,
+            direction: Literal["left", "right"]
+    ):
+        '''检查端口朝向'''
 
-        return Vec2(0, cls.PORT_BOX_TOP_Y + cls.PORT_BOX_HEIGHT / 2)
+        if direction not in [cls.DIRECTION_LEFT, cls.DIRECTION_RIGHT]:
+            raise ValueError(f"未知IDF端口朝向: {direction}")
 
     @classmethod
-    def _nrtPointFrontLocalStatic(cls) -> Vec2:
+    def _rtPointFrontLocalStatic(
+            cls,
+            direction: Literal["left", "right"] = "left"
+    ) -> Vec2:
+        '''获取实时纵向加密端口前点局部坐标'''
+
+        return Vec2(
+            cls._portBoxFrontXStatic(direction),
+            cls.PORT_BOX_TOP_Y + cls.PORT_BOX_HEIGHT / 2
+        )
+
+    @classmethod
+    def _nrtPointFrontLocalStatic(
+            cls,
+            direction: Literal["left", "right"] = "left"
+    ) -> Vec2:
         '''获取非实时纵向加密端口前点局部坐标'''
 
-        return Vec2(0, cls.PORT_BOX_BOTTOM_Y + cls.PORT_BOX_HEIGHT / 2)
+        return Vec2(
+            cls._portBoxFrontXStatic(direction),
+            cls.PORT_BOX_BOTTOM_Y + cls.PORT_BOX_HEIGHT / 2
+        )
 
+    @classmethod
+    def _portBoxInsertXStatic(
+            cls,
+            direction: Literal["left", "right"]
+    ) -> float:
+        '''获取端口框插入点X坐标'''
+
+        cls._checkDirection(direction)
+
+        if direction == cls.DIRECTION_LEFT:
+            return 0
+
+        return cls.WIDTH - cls.PORT_BOX_WIDTH
+
+    @classmethod
+    def _portBoxFrontXStatic(
+            cls,
+            direction: Literal["left", "right"]
+    ) -> float:
+        '''获取端口前点X坐标'''
+
+        cls._checkDirection(direction)
+
+        if direction == cls.DIRECTION_LEFT:
+            return 0
+
+        return cls.WIDTH - cls.PORT_BOX_WIDTH
+
+    @classmethod
+    def _portBoxAfterXStatic(
+            cls,
+            direction: Literal["left", "right"]
+    ) -> float:
+        '''获取端口后点X坐标'''
+
+        cls._checkDirection(direction)
+
+        if direction == cls.DIRECTION_LEFT:
+            return cls.PORT_BOX_WIDTH
+
+        return cls.WIDTH
 
     def __init__(
             self,
             doc: Drawing,
             devNum: str,
             devName: str,
-            portR: str,
-            portNR: str,
+            portR: Optional[str],
+            portNR: Optional[str],
             insertPoint: Vec2,
-            isCutBusiness: bool = False
+            isCutBusiness: bool = False,
+            direction: Literal["left", "right"] = "left"
     ) -> None:
         """纵向加密IDF连接面板图初始化
 
@@ -93,9 +163,12 @@ class CDIDFConnectionPanel(NewBlock):
         :param portNR: 非实时纵向加密使用端口
         :param insertPoint: 插入点
         :param isCutBusiness: 是否绘制业务断开标记
+        :param direction: 端口朝向，left为左侧端口，right为右侧端口
         """
 
         super().__init__(doc)
+
+        self._checkDirection(direction)
 
         self.insertPoint = insertPoint
 
@@ -104,6 +177,7 @@ class CDIDFConnectionPanel(NewBlock):
         self.portR = portR
         self.portNR = portNR
         self.isCutBusiness = isCutBusiness
+        self.direction = direction
 
         self._drawOuterFrame()
         self._drawPortBox()
@@ -126,41 +200,52 @@ class CDIDFConnectionPanel(NewBlock):
     def _drawPortBox(self):
         '''绘制端口框'''
 
+        portBoxInsertX = self._portBoxInsertX()
+
         self.addRectangle(
             width=self.PORT_BOX_WIDTH,
             height=self.PORT_BOX_HEIGHT,
             line=现有设备(),
-            insertPoint=Vec2(0, self.PORT_BOX_TOP_Y)
+            insertPoint=Vec2(portBoxInsertX, self.PORT_BOX_TOP_Y)
         )
 
         self.addRectangle(
             width=self.PORT_BOX_WIDTH,
             height=self.PORT_BOX_HEIGHT,
             line=现有设备(),
-            insertPoint=Vec2(0, self.PORT_BOX_BOTTOM_Y)
+            insertPoint=Vec2(portBoxInsertX, self.PORT_BOX_BOTTOM_Y)
         )
 
     def _drawPortText(self):
         '''绘制端口文字'''
 
-        self.addMtext(
-            textContent=CADColor.colored(self.portR),
-            textFontHeight=self.PORT_TEXT_HEIGHT,
-            textWidth=self.PORT_BOX_WIDTH * self.PORT_TEXT_WIDTH_RATE,
-            textColor=CADColor.toIndex("ByBlock"),
-            textLineSpacingDistance=1,
-            insertPoint=Vec2(self.PORT_BOX_WIDTH / 2, self._rtCenterY()),
-            style="gedi",
-            attachment=5
+        self._drawPortMtext(
+            textContent=self.portR,
+            insertPoint=Vec2(self._portBoxCenterX(), self._rtCenterY())
         )
 
+        self._drawPortMtext(
+            textContent=self.portNR,
+            insertPoint=Vec2(self._portBoxCenterX(), self._nrtCenterY())
+        )
+
+    def _drawPortMtext(
+            self,
+            textContent: Optional[str],
+            insertPoint: Vec2
+    ):
+        '''绘制单个端口文字'''
+
+        if textContent is None:
+            return
+
         self.addMtext(
-            textContent=CADColor.colored(self.portNR),
+            textContent=CADColor.colored(textContent),
             textFontHeight=self.PORT_TEXT_HEIGHT,
             textWidth=self.PORT_BOX_WIDTH * self.PORT_TEXT_WIDTH_RATE,
             textColor=CADColor.toIndex("ByBlock"),
             textLineSpacingDistance=1,
-            insertPoint=Vec2(self.PORT_BOX_WIDTH / 2, self._nrtCenterY()),
+            insertPoint=insertPoint,
             style="gedi",
             attachment=5
         )
@@ -176,15 +261,17 @@ class CDIDFConnectionPanel(NewBlock):
             textWidth=(self.WIDTH - self.PORT_BOX_WIDTH) * self.DEVICE_TEXT_WIDTH_RATE,
             textColor=CADColor.toIndex("ByBlock"),
             textLineSpacingDistance=1,
-            insertPoint=Vec2((self.PORT_BOX_WIDTH + self.WIDTH) / 2, self.HEIGHT / 2),
+            insertPoint=Vec2(self._deviceTextCenterX(), self.HEIGHT / 2),
             style="gedi",
             attachment=5
         )
 
     def _drawCutBusiness(self):
         '''绘制业务断开标记'''
+
         if self.portR:
             self._drawCutBusinessTop()
+
         if self.portNR:
             self._drawCutBusinessBottom()
 
@@ -207,7 +294,7 @@ class CDIDFConnectionPanel(NewBlock):
             textWidth=self.CUT_BUSINESS_TEXT_WIDTH,
             textColor=CADColor.toIndex("ByBlock"),
             textLineSpacingDistance=1,
-            insertPoint=endPoint + Vec2(self.CUT_BUSINESS_TEXT_OFFSET_X, self.CUT_BUSINESS_TEXT_OFFSET_Y),
+            insertPoint=endPoint + Vec2(self._cutBusinessTextOffsetX(), self.CUT_BUSINESS_TEXT_OFFSET_Y),
             style="gedi",
             attachment=8
         )
@@ -231,16 +318,42 @@ class CDIDFConnectionPanel(NewBlock):
             textWidth=self.CUT_BUSINESS_TEXT_WIDTH,
             textColor=CADColor.toIndex("ByBlock"),
             textLineSpacingDistance=1,
-            insertPoint=endPoint + Vec2(self.CUT_BUSINESS_TEXT_OFFSET_X, -1 * self.CUT_BUSINESS_TEXT_OFFSET_Y),
+            insertPoint=endPoint + Vec2(self._cutBusinessTextOffsetX(), -1 * self.CUT_BUSINESS_TEXT_OFFSET_Y),
             style="gedi",
             attachment=2
         )
+
+    def _portBoxInsertX(self) -> float:
+        '''获取端口框插入点X坐标'''
+
+        return self._portBoxInsertXStatic(self.direction) # type: ignore
+
+    def _portBoxCenterX(self) -> float:
+        '''获取端口框中心X坐标'''
+
+        return self._portBoxInsertX() + self.PORT_BOX_WIDTH / 2
+
+    def _deviceTextCenterX(self) -> float:
+        '''获取设备文字中心X坐标'''
+
+        if self.direction == self.DIRECTION_LEFT:
+            return (self.PORT_BOX_WIDTH + self.WIDTH) / 2
+
+        return (self.WIDTH - self.PORT_BOX_WIDTH) / 2
+
+    def _cutBusinessTextOffsetX(self) -> float:
+        '''获取业务割接文字X方向偏移'''
+
+        if self.direction == self.DIRECTION_LEFT:
+            return self.CUT_BUSINESS_TEXT_OFFSET_X
+
+        return -self.CUT_BUSINESS_TEXT_OFFSET_X
 
     def _rtPortTopCenterLocal(self) -> Vec2:
         '''获取实时纵向加密端口框上中点局部坐标'''
 
         return Vec2(
-            self.PORT_BOX_WIDTH / 2,
+            self._portBoxCenterX(),
             self.PORT_BOX_TOP_Y + self.PORT_BOX_HEIGHT
         )
 
@@ -248,10 +361,9 @@ class CDIDFConnectionPanel(NewBlock):
         '''获取非实时纵向加密端口框下中点局部坐标'''
 
         return Vec2(
-            self.PORT_BOX_WIDTH / 2,
+            self._portBoxCenterX(),
             self.PORT_BOX_BOTTOM_Y
         )
-
 
     def _rtCenterY(self) -> float:
         '''获取实时纵向加密端口中心Y坐标'''
@@ -266,26 +378,37 @@ class CDIDFConnectionPanel(NewBlock):
     def _rtPointFrontLocal(self) -> Vec2:
         '''获取实时纵向加密端口前点局部坐标'''
 
-        return Vec2(0, self._rtCenterY())
+        return Vec2(
+            self._portBoxFrontXStatic(self.direction), # type: ignore
+            self._rtCenterY()
+        )
 
     def _rtPointAfterLocal(self) -> Vec2:
         '''获取实时纵向加密端口后点局部坐标'''
 
-        return Vec2(self.PORT_BOX_WIDTH, self._rtCenterY())
+        return Vec2(
+            self._portBoxAfterXStatic(self.direction), # type: ignore
+            self._rtCenterY()
+        )
 
     def _nrtPointFrontLocal(self) -> Vec2:
         '''获取非实时纵向加密端口前点局部坐标'''
 
-        return Vec2(0, self._nrtCenterY())
+        return Vec2(
+            self._portBoxFrontXStatic(self.direction), # type: ignore
+            self._nrtCenterY()
+        )
 
     def _nrtPointAfterLocal(self) -> Vec2:
         '''获取非实时纵向加密端口后点局部坐标'''
 
-        return Vec2(self.PORT_BOX_WIDTH, self._nrtCenterY())
+        return Vec2(
+            self._portBoxAfterXStatic(self.direction), # type: ignore
+            self._nrtCenterY()
+        )
 
     def RTPointFront(self) -> Vec2:
         '''返回实时纵向加密端口前点绝对坐标'''
-
 
         return self.insertPoint + self._rtPointFrontLocal()
 

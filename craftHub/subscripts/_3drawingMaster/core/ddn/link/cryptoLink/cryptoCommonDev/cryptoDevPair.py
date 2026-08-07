@@ -24,6 +24,8 @@ class CryptoDevPair(CommonCryptoDev):
             rtPname: str,
             nrtPnum: str,
             nrtPname: str,
+            rtPort: Optional[str] = None,
+            nrtPort: Optional[str] = None,
             rtIsRoom2: bool = False,
             nrtIsRoom2: bool = False,
             rtIsJump: bool = False,
@@ -69,6 +71,9 @@ class CryptoDevPair(CommonCryptoDev):
 
         self.rtPanel: Optional[CDConnectionPanel] = None
         self.nrtPanel: Optional[CDConnectionPanel] = None
+        
+        self.rtPort = rtPort
+        self.nrtPort = nrtPort
 
     def drawPanel(
             self,
@@ -93,7 +98,8 @@ class CryptoDevPair(CommonCryptoDev):
                 devPnum=self.rtPnum,
                 devPname=self.rtPname,
                 crypoType=CryptoChannel.RT,
-                insertPoint=rtInsertPoint
+                insertPoint=rtInsertPoint,
+                portName=self.rtPort
             )
 
             self.rtPanel.insertInto(owner.block)
@@ -109,7 +115,8 @@ class CryptoDevPair(CommonCryptoDev):
                 devPnum=self.nrtPnum,
                 devPname=self.nrtPname,
                 crypoType=CryptoChannel.NRT,
-                insertPoint=nrtInsertPoint
+                insertPoint=nrtInsertPoint,
+                portName=self.nrtPort
             )
 
             self.nrtPanel.insertInto(owner.block)
@@ -134,16 +141,16 @@ class CryptoDevPair(CommonCryptoDev):
 
         if channel == CryptoChannel.RT:
             self._assertRTPanelDrawn()
-            return self.rtPanel.frontPoint(), self.rtPnum  # type: ignore
+            return self.rtPanel.frontPoint(), self.rtPort  # type: ignore
 
         if channel == CryptoChannel.NRT:
             self._assertNRTPanelDrawn()
-            return self.nrtPanel.frontPoint(), self.nrtPnum  # type: ignore
+            return self.nrtPanel.frontPoint(), self.nrtPort  # type: ignore
 
         raise ValueError(f"未知纵向加密链路通道: {channel}")
 
     def afterPoint(self, channel: str):
-        '''获取设备后连接点'''
+        '''获取设备后连接点和端口名'''
 
         return self.frontPoint(channel)
 

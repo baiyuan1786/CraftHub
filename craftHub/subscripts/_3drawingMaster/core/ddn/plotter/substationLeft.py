@@ -14,11 +14,11 @@ from ...common.meta import (
     CableLayIntroduction,
     FrameA3plusplus,
     Legend,
-    LocalDDNLayer1Introduction,
     NetWorkLinkIntroduction,
     PlaneIntroduction,
     FrameConnection
 )
+from .introduction import LocalDDNLayer1Introduction
 from ..link import ConnectionMap
 from ..reader import DataUnitDDN
 
@@ -124,12 +124,7 @@ class DDNsubplotter_left:
 
         introduction = LocalDDNLayer1Introduction(
             doc=self.doc,
-            walkLine=data.get("walkLine"),
-            isNewPDU=data.get("DDNisNewPDU"),
-            installPnum=data.get("DDNInstallPnum"),
-            installCabinetType=data.get("cabinetType"),
-            tk1=data.get("powerCabinetTkA1"),
-            tk2=data.get("powerCabinetTkA2")
+            data=data
         )
 
         self.frame.grid(

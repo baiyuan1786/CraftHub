@@ -152,7 +152,8 @@ class NetworkLinkTable:
             return workbook.add_format(fmtDict)  # type: ignore
 
         formatBase = makeFormat()
-        formatBaseTitle = makeFormat(bold=True, bg_color="#B4C6E7")
+        # formatBaseTitle = makeFormat(bold=True, bg_color="#B4C6E7")
+        formatBaseTitle = makeFormat(bold=True, bg_color="#FFFFFF") # 使用纯白色作为表头底色
 
         for index, columnLen in enumerate(self.COLUMN_LEN_LIST):
             worksheet.set_column(index, index, columnLen, formatBase)

@@ -197,3 +197,12 @@ class 灰色边框虚线(Line):
                             ltscale = 10,
                             lineWeight = -1)
         
+class 非建设设备(Line):
+    '''普通灰色直线'''
+    def __init__(self):
+        super().__init__(lineName = "非建设设备",
+                         lineType = Continuous(),
+                         color = CADColor.toIndex("灰色"),
+                         const_width = 0,
+                         ltscale = 1,
+                         lineWeight = -3)

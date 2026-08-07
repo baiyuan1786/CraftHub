@@ -14,10 +14,10 @@ from ..reader import DataUnitDDN
 
 from .cryptoLink import CryptoLink
 from .ddnDevice import DDN设备连接面板图
-from .gcnLink.gcnLink import GCNLink
-from .gcnLink.gcnLinkData import GCNLinkData
 from .powerLink import DDNPowerLink
-
+from .gcnLink.gcnExpansionLink import GCNExpansionLink
+from .gcnLink.gcnLinkData import GCNLinkData
+from .gcnLink.gcnNormalLink import GCNNormalLink
 
 class ConnectionMap(NewBlock):
     '''ddn定向式绘图网络连接图'''
@@ -121,17 +121,25 @@ class ConnectionMap(NewBlock):
         cryptoLink.insertInto(self.block)
 
     def _buildGCNLink(self):
-        '''构建GCN网连接图'''
+        '''构建保底通信网连接图'''
 
-        linkPointList = self._getGCNLinkPointList()
-        self._checkGCNLinkPointList(linkPointList)
+        linkData = GCNLinkData(self.data)
+        linkPointList = self._getGCNLinkPointList(linkData)
 
-        gcnLink = GCNLink(
+        if len(linkPointList) != 2:
+            raise ValueError(
+                f"GCN网连接点数量必须为2，当前数量为{len(linkPointList)}"
+            )
+
+        linkCls = GCNExpansionLink if linkData.isExpansion() else GCNNormalLink
+
+        gcnLink = linkCls(
             doc=self.doc,
             data=self.data,
-            insertPoint=self.GCN_LINK_INSERT_POINT,
+            insertPoint=Vec2(130, 90),
             linkPoint1=linkPointList[0],
             linkPoint2=linkPointList[1],
+            linkData=linkData
         )
 
         gcnLink.insertInto(self.block)
@@ -144,10 +152,8 @@ class ConnectionMap(NewBlock):
             self.deviceConPanel.height + self.POWER_LINK_OFFSET_Y
         )
 
-    def _getGCNLinkPointList(self) -> List[Vec2]:
+    def _getGCNLinkPointList(self, linkData: GCNLinkData) -> List[Vec2]:
         '''获取GCN网接入点列表'''
-
-        linkData = GCNLinkData(self.data)
 
         return [
             self._getGCNLinkPoint(linkBoard)

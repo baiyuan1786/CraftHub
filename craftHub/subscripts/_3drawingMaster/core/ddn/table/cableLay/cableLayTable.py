@@ -41,17 +41,18 @@ class CableLayTable:
     SHEET_NAME_TEMPLATE = "线缆敷设表(单台设备)"
 
     COLUMN_LEN_LIST: List[float] = [
-        16.5,
-        4.5,
-        17,
-        23.25,
-        19.5,
-        26.75,
-        10.25,
-        7,
-        7,
-        24.5,
-        11.3,
+        16.5,   # A 1
+        4.5,    # B 2
+        17,     # C 3
+        23.25,  # D 4
+        19.5,   # E 5
+        26.75,  # F 6
+        10.25,  # G 7
+        7,      # H 8
+        7,      # I 9
+        24.5,   # J 10
+        6.5,    # K 11
+        11.3,   # L 12
         9,
         9,
         9,
@@ -62,9 +63,9 @@ class CableLayTable:
 
     ZOOM_SCALE = 70
 
-    FORMAT_INDEX_GREEN_START = 15
-    FORMAT_INDEX_RED_START = 13
-    FORMAT_INDEX_YELLOW_START = 11
+    FORMAT_INDEX_GREEN_START = 16
+    FORMAT_INDEX_RED_START = 14
+    FORMAT_INDEX_YELLOW_START = 12
 
     EMPTY_ROW_NUM = 2
 

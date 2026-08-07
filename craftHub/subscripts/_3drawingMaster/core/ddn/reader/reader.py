@@ -56,12 +56,14 @@ class ReaderDDN(Reader):
         ("nrtcdDevPortList", ExcelValueType.LIST_STR),
         ("GCNPnum", ExcelValueType.STR),
         ("GCNPname", ExcelValueType.STR),
-        ("GCNIDFunitList", ExcelValueType.LIST_STR),
+        ("GCNexistedEdgedIDF", ExcelValueType.STR),
         ("GCNTargetStationList", ExcelValueType.LIST_STR),
         ("GCNLinkBoardList", ExcelValueType.LIST_STR),
         ("GCNSlotList", ExcelValueType.LIST_INT),
         ("GCNBoardName", ExcelValueType.STR),
         ("GCNareaName", ExcelValueType.STR),
+        ("GCNisExpansion", ExcelValueType.BOOL),
+        # ("GCNETHslotList", ExcelValueType.STR),
     ]
     
     def __init__(self, excelPath: Path, sheetName: str) -> None:

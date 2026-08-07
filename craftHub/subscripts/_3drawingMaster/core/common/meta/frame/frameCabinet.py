@@ -12,7 +12,7 @@ from ezdxf.math import Vec2
 class FrameCabinetA3plus(NewBlock):
     '''屏柜外框A3+, 该外框由A3框直接管理
     该外框为屏柜外的灰色外框'''
-    # 不复制了，直接绘制
+
     WIDTH = 216.1274
     HEIGHT = 267.0965
     def __init__(self,

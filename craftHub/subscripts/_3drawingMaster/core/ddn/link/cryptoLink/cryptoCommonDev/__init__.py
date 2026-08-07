@@ -8,3 +8,4 @@ from .cryptoNewEdgedIDF import CryptoNewEdgedIDF
 from .cryptoExistedEdgedIDF import CryptoExistedEdgedIDF
 from .cryptoDevPair import CryptoDevPair
 from .cryptoAccessSwitch import CryptoAccessSwitch
+from .cryptoRoomConnectedIDF import CryptoRoomConnectedIDF

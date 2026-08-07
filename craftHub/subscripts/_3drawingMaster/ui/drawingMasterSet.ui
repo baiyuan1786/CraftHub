@@ -67,14 +67,14 @@
          </sizepolicy>
         </property>
         <property name="text">
-         <string>左图框块名</string>
+         <string>A++图框</string>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QLineEdit" name="lineEdit_frameLeft">
         <property name="placeholderText">
-         <string>请输入左图框块名称</string>
+         <string>请输入A3++图框块名称</string>
         </property>
        </widget>
       </item>
@@ -87,14 +87,14 @@
          </sizepolicy>
         </property>
         <property name="text">
-         <string>右图框块名</string>
+         <string>A+图框</string>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QLineEdit" name="lineEdit_frameRight">
         <property name="placeholderText">
-         <string>请输入右图框块名称</string>
+         <string>请输入A+图框块名称</string>
         </property>
        </widget>
       </item>

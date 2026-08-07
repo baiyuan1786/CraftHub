@@ -2,8 +2,6 @@
 #   Description: 表格插入器GUI页面
 #   Authors:     BaiYuan <V:gzq395642104>
 ##########################################################################################################
-import time
-import psutil
 from pathlib import Path
 from typing import Any, Optional, Set
 

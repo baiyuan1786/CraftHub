@@ -180,5 +180,9 @@ class DataUnitIDN(DataUnit):
         self.assertLen("area4DevNumList", area4Len)
         self.assertLen("area4DevNameList", area4Len)
         self.assertLen("area4DevPortList", area4Len)
+        
+        # 取电类型信息
+        self.assertValue("powerType", ["独立", "DC/DC", "DC/独立"])
+        self.assertType("isPowerModify", bool)
 
      

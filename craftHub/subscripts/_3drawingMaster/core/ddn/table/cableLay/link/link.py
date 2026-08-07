@@ -5,7 +5,7 @@
 
 import math
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional, Literal
 
 import pandas as pd
 from pandas import DataFrame, Series
@@ -45,6 +45,7 @@ class Link(LinkBase):
     COLUMN_NUM = "数量/条"
     COLUMN_WHOLE_LINE_LEN = "合计/米"
     COLUMN_NOTE = "备注"
+    COLUMN_SUPPLY = "供货"
     COLUMN_WALK_LINE = "走线"
     COLUMN_CROSSING_CABINET = "跨越机柜"
     COLUMN_CROSSING_ROW = "跨越行"
@@ -82,7 +83,8 @@ class Link(LinkBase):
             crossingCabinet: int = 0,
             crossingRow: int = 0,
             crossingFloor: bool = False,
-            crossingRoom: bool = False
+            crossingRoom: bool = False,
+            supply: Literal["甲供", "乙供"] = "甲供"
     ) -> None:
         """单条线缆连接初始化
 
@@ -97,6 +99,7 @@ class Link(LinkBase):
         :param crossingRow:     跨行数量
         :param crossingFloor:   是否跨层
         :param crossingRoom:    是否同层跨房间
+        :param supply:    供货
         """
 
         self.order = order
@@ -106,6 +109,7 @@ class Link(LinkBase):
         self.endPos = endPos
         self.num = num
         self.note = note
+        self.supply = supply
 
         self.crossingCabinet = crossingCabinet
         self.crossingRow = crossingRow
@@ -167,6 +171,9 @@ class Link(LinkBase):
             endPos: Optional[str] = None
     ):
         '''计算全部线缆长度/m'''
+        
+        if "另外立项" in self.note:
+            return "/"
 
         oneLen = self.oneLineLen(walkLine, startPos, endPos)
 
@@ -193,6 +200,7 @@ class Link(LinkBase):
             self.COLUMN_NUM: self.num,
             self.COLUMN_WHOLE_LINE_LEN: self.wholeLineLen(walkLine, self.startPos, self.endPos),
             self.COLUMN_NOTE: self.note,
+            self.COLUMN_SUPPLY: self.supply,
             self.COLUMN_WALK_LINE: walkLine,
             self.COLUMN_CROSSING_CABINET: int(self.crossingCabinet),
             self.COLUMN_CROSSING_ROW: int(self.crossingRow),

@@ -14,9 +14,7 @@ from ezdxf.math import Vec2
 
 from .data import Data
 
-
 Attachment = Literal[2, 4, 6, 8]
-
 
 @dataclass(frozen=True)
 class _TextItem:

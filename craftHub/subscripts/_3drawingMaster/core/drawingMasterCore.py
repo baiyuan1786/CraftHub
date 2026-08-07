@@ -121,7 +121,7 @@ class DrawingMasterCore:
         excelConfigKey="cableLay",
         sheetConfigKey="cableLaySheet",
         startCol="B",
-        endCol="J",
+        endCol="K",
         oleInsertPointOffset=Vec2(675, 118),
         oleWidth=229,
         maxHeight=112

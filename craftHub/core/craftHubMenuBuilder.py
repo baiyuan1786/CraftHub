@@ -23,6 +23,7 @@ from ..tool.xlsxCounter import XlsxCounter
 from ..tool.cadBlockPrinter import CadBlockPrinter
 from ..tool.pythonLineCounter import PythonLineCounterPage
 from ..tool.tableInserter import TableInserterPage
+from ..tool.deepSeekOCR import DeepSeekOcrPage
 
 class CraftHubMenuBuilder:
     '''CraftHub菜单栏构建器'''
@@ -54,6 +55,7 @@ class CraftHubMenuBuilder:
     ACTION_CADBLOCK_PRINTER = "CadBlockPrinter"
     ACTION_PYTHON_COUNTER = "PythonCounter"
     ACTION_TABLE_INSERTER = "TableInserter"
+    ACTION_DEEPSEEKOCR = "DeepSeekOCR"
 
     ACTION_CONNECT = "Connect"
     ACTION_TERMINAL_WINDOW = "Terminal Window"
@@ -203,6 +205,12 @@ class CraftHubMenuBuilder:
             menuName=self.MENU_TOOL,
             actionName=self.ACTION_TABLE_INSERTER,
             triggerFunc=lambda: TableInserterPage().open(tab=self.tabMain)
+        )
+        
+        self.craftHubMenu.addAction(
+            menuName=self.MENU_TOOL,
+            actionName=self.ACTION_DEEPSEEKOCR,
+            triggerFunc=lambda: DeepSeekOcrPage().open(tab=self.tabMain)
         )
 
     def _buildTerminalMenu(self):

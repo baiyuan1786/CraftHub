@@ -16,7 +16,8 @@ class Cabinet:
                  height: int = 220,
                  width: int = 60,
                  depth: Literal[60, 80] = 60,
-                 cabinetType: Literal["新增", "占用"] = "新增"
+                 cabinetType: Literal["新增", "占用"] = "新增",
+                 withGroudLine = False
                  ) -> None:
         """屏柜初始化
 
@@ -26,6 +27,7 @@ class Cabinet:
         :param width:   宽, cm
         :param depth:   深, cm
         :param cabinetType: 屏柜类型，影响平面图绘图线型
+        :param withGroudLine: 绘制屏柜接地线
         """
         
         self.pNum = pNum
@@ -35,6 +37,7 @@ class Cabinet:
         self.depth = int(depth)
         self.cabinetType = cabinetType
         self.deviceList: List[Device] = [] # 设备实体列表
+        self.withGroudLine = withGroudLine
 
     def toPanel(self, doc:Drawing):
         '''转换面板图'''
@@ -44,7 +47,8 @@ class Cabinet:
             name = self.name,
             height = self.height,
             width = self.width,
-            isNew = (self.cabinetType == "新增")
+            isNew = (self.cabinetType == "新增"),
+            withGroudLine = self.withGroudLine
         )
         
         # 插入设备面板图

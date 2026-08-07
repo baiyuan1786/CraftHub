@@ -15,10 +15,10 @@ from ...common.meta import (
     ConnectionIntroduction,
     FrameA3plusplus,
     Legend,
-    LocalIDNLayer1Introduction,
     NetWorkLinkIntroduction,
     PlaneIntroduction,
 )
+from .introduction import LocalIDNLayer1Introduction
 from ..link import ConnectionMap
 from ..reader.reader import DataUnitIDN
 
@@ -109,10 +109,7 @@ class IDNsubPlotter_left:
 
         introduction = LocalIDNLayer1Introduction(
             doc=self.doc,
-            walkLine=data.get("walkLine"),
-            isNewPDU=data.get("isNewPDU"),
-            installPnum=data.get("installPnum"),
-            installCabinetType=data.get("installCabinetType"),
+            data=data
         )
 
         self.frame.grid(introduction, self.frame.introductionPoint())

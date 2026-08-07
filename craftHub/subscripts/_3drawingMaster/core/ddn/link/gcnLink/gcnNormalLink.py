@@ -1,5 +1,5 @@
 ##########################################################################################################
-#   Description: GCN网连接图
+#   Description: GCN网非扩容连接图
 #   Authors:     BaiYuan <V:gzq395642104>
 ##########################################################################################################
 
@@ -12,17 +12,15 @@ from ezdxf.math import Vec2
 
 from ....common.graph import CADColor, NewBlock
 from ....common.graph import 本期新增网线, 逻辑连线示意, 现有互联六类电缆
-
 from ...reader import DataUnitDDN
-
-from .gcnData import EdgedIDFData, GCNDeviceData, GCNLinkItemData
 from .gcnDev import GCNDeviceConnectionPanel
 from .gcnIDF import GCNIDFConnectionPanel
 from .gcnLinkData import GCNLinkData
+from .gcnData import GCNLinkItemData
 
 
-class GCNLink(NewBlock):
-    '''GCN网连接图'''
+class GCNNormalLink(NewBlock):
+    '''GCN网非扩容连接图'''
 
     LINE_NUM = 2
 
@@ -43,7 +41,7 @@ class GCNLink(NewBlock):
     DEVICE_TYPE_EDGED_IDF = "edgedIDF"
     DEVICE_TYPE_NORMAL_IDF = "normalIDF"
     DEVICE_TYPE_GCN_DEVICE = "gcnDevice"
-    
+
     FIRST_LINK_MIDDLE_OFFSET = Vec2(5, 0)
 
     def __init__(
@@ -53,15 +51,16 @@ class GCNLink(NewBlock):
             insertPoint: Vec2,
             linkPoint1: Vec2,
             linkPoint2: Vec2,
+            linkData: GCNLinkData | None = None
     ) -> None:
-        """初始化GCN网连接图
+        """初始化GCN网非扩容连接图
 
         :param doc: CAD文档
-        :param data: ddn数据单元
+        :param data: DDN数据单元
         :param insertPoint: 插入点
         :param linkPoint1: 新增路由器GCN网电口1接入点
         :param linkPoint2: 新增路由器GCN网电口2接入点
-        :param slotNumList: 传输设备两块以太网板卡槽位号，允许1-12槽，默认1槽和3槽
+        :param linkData: GCN连接数据
         """
 
         super().__init__(doc=doc)
@@ -69,8 +68,7 @@ class GCNLink(NewBlock):
         self.doc = doc
         self.data = data
         self.insertPoint = insertPoint
-
-        self.linkData = GCNLinkData(data)
+        self.linkData = GCNLinkData(data) if linkData is None else linkData
 
         self.currentPointList: List[Vec2] = [
             linkPoint1,
@@ -80,11 +78,12 @@ class GCNLink(NewBlock):
         self.nextInsertX = insertPoint.x
         self.hasDrawnFirstDevice = False
         self.lastDeviceType = self.DEVICE_TYPE_NONE
+
         self._checkLinkPointList()
         self._build()
 
     def _build(self):
-        '''构建GCN网连接图'''
+        '''构建GCN网非扩容连接图'''
 
         self._buildEdgedIDF()
         self._buildIDFList()
@@ -109,11 +108,11 @@ class GCNLink(NewBlock):
 
         for idfUnit in self.linkData.iterIDFUnit():
             self._addIDFPair(
-                devNum=idfUnit,
+                devNum=idfUnit, # type: ignore
                 devName=GCNIDFConnectionPanel.DEVICE_NAME,
                 deviceType=self.DEVICE_TYPE_NORMAL_IDF
             )
-            
+
     def _buildGCNDevice(self):
         '''构建GCN网传输设备'''
 
@@ -146,7 +145,6 @@ class GCNLink(NewBlock):
 
         devicePanel.insertInto(self.block)
 
-        # 连接到GCN网设备
         for index, linkItemData in enumerate(linkItemDataList):
             self._connectToGCNDeviceSlot(
                 devicePanel=devicePanel,
@@ -157,7 +155,7 @@ class GCNLink(NewBlock):
             )
 
         self._markDeviceDrawn(self.DEVICE_TYPE_GCN_DEVICE)
-    
+
     def _addIDFPair(
             self,
             devNum: str,
@@ -177,7 +175,6 @@ class GCNLink(NewBlock):
 
         idfPanelList: List[GCNIDFConnectionPanel] = []
 
-        # 插入两个IDF
         for index, (currentPoint, insertPoint) in enumerate(zip(self.currentPointList, insertPointList)):
             idfPanel = self._addSingleIDF(
                 devNum=devNum,
@@ -279,10 +276,13 @@ class GCNLink(NewBlock):
             )
             return
 
+        line = self._getInputLinkLine(previousDeviceType)
+
         self.addLine(
             startPoint=startPoint,
             endPoint=endPoint,
-            line=self._getInputLinkLine(previousDeviceType)
+            line=line,
+            text="利旧现有电缆" if isinstance(line, 现有互联六类电缆) else None
         )
 
     def _drawTargetLogicLink(
@@ -326,7 +326,7 @@ class GCNLink(NewBlock):
         if index == 0:
             return None
 
-        return self.FIRST_LINK_MIDDLE_OFFSET 
+        return self.FIRST_LINK_MIDDLE_OFFSET
 
     def _markDeviceDrawn(self, deviceType: str):
         '''标记设备已经绘制'''
@@ -371,6 +371,6 @@ class GCNLink(NewBlock):
             self,
             layout: BlockLayout | Modelspace | Any
     ):
-        '''插入GCN网连接图'''
+        '''插入GCN网非扩容连接图'''
 
         return super().insertInto(layout, Vec2(0, 0))

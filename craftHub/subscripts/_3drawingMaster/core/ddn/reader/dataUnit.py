@@ -54,6 +54,7 @@ class DataUnitDDN(DataUnit):
         self._checkEdgedIDFData()
         self._checkCryptoLinkData()
         self._checkGCNLinkData()
+        self._checkGCNexpansionData()
 
     def _checkProjectData(self):
         '''检查项目基本信息'''
@@ -124,6 +125,11 @@ class DataUnitDDN(DataUnit):
     def _checkPowerLinkData(self):
         '''检查电源连接图信息'''
 
+        # 取电类型信息
+        self.assertValue("powerType", ["独立", "DC/DC", "DC/独立"])
+        self.assertType("isPowerModify", bool)
+        
+        # 取电屏信息
         self.assertType("powerCabinetPnum1", str)
         self.assertType("powerCabinetPname1", str)
         self.assertType("powerCabinetTknum1", str)
@@ -249,12 +255,11 @@ class DataUnitDDN(DataUnit):
         self.assertType("GCNBoardName", str)
         self.assertType("GCNareaName", str)
 
-        self.assertType("GCNIDFunitList", list)
+        self.assertType("GCNexistedEdgedIDF", str, allowNone = True)
         self.assertType("GCNTargetStationList", list)
         self.assertType("GCNLinkBoardList", list)
         self.assertType("GCNSlotList", list)
 
-        self._assertListItemType("GCNIDFunitList", str)
         self._assertListItemType("GCNTargetStationList", str)
         self._assertListItemType("GCNLinkBoardList", str)
 
@@ -288,6 +293,13 @@ class DataUnitDDN(DataUnit):
 
         self._checkGCNSlotList()
 
+    def _checkGCNexpansionData(self):
+        '''检查GCN扩容信息'''
+
+        self.assertType("GCNisExpansion", bool)         # 保底网扩容参数
+        self.assertType("GCNETHslotList", list)         # 保底网已存在以太网板卡列表(允许定义占用，新增)
+        self.assertType("GCNnewETHslotEdgedIDF", str, allowNone = True) # 新增板卡成端IDF
+
     def _checkGCNSlotList(self):
         '''检查GCN网槽位列表'''
 
@@ -307,6 +319,7 @@ class DataUnitDDN(DataUnit):
                     f"GCN网槽位号必须在{self.GCN_SLOT_MIN}-{self.GCN_SLOT_MAX}之间，"
                     f"当前值为{slotNum}"
                 )
+                
 
     def _checkCryptoTag(self, parseUnit: ParseUnit):
         '''检查纵向加密设备tag'''

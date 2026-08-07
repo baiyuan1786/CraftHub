@@ -110,6 +110,9 @@ class Link(LinkBase):
     
     def wholeLineLen(self, walkLine: str, startPos: Optional[str] = None, endPos: Optional[str] = None):
         '''全部线长度'''
+        if "另外立项" in self.note:
+            return "/"
+        
         oneLen = self.oneLineLen(walkLine, startPos, endPos)
         return oneLen * self.num if isinstance(oneLen, float) or isinstance(oneLen, int) else "未知"
 

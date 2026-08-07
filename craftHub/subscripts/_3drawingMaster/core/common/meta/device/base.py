@@ -1,5 +1,6 @@
 ##########################################################################################################
 #   Description: 设备类，存储设备所有信息，并可从设备类导出设备面板图、设备屏柜面板图、设备单板说明图
+#                注意，此设备类不包含连接面板图
 #   Authors:     BaiYuan <V:gzq395642104>
 ##########################################################################################################
 from ...graph import CustomBlock
@@ -15,7 +16,8 @@ DeviceType = Literal[
     "remove",
     "replace",
     "replaced",
-    "dropped"
+    "dropped",
+    "nobuild"
 ]
 
 class Device(ABC):
@@ -27,7 +29,8 @@ class Device(ABC):
         "remove",
         "replace",
         "replaced",
-        "dropped"
+        "dropped",
+        "nobuild"   # 不建设的设备
     }
 
     def __init__(self,

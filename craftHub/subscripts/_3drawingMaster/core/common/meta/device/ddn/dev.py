@@ -21,6 +21,7 @@ class DDN设备(Device):
     DEVICE_TYPE = "new"
 
     PANEL_BLOCK_NAME = "DDSJWLYQ-MB"
+    PANEL_BLOCK_KR_NAME = "DDSJWLYQ_MB_DC_KR"
 
     def __init__(self, altitudeU: int) -> None:
         """初始化DDN设备
@@ -83,10 +84,10 @@ class DDN设备(Device):
         if blockName is not None:
             cls.setBlockName(blockName)
 
-    def toDevicePanel(self, doc: Drawing):
+    def toDevicePanel(self, doc: Drawing, isExpansion: bool):
         '''转换设备面板图'''
 
         return ExistedBlock(
             doc=doc,
-            blockName=self.PANEL_BLOCK_NAME
+            blockName=self.PANEL_BLOCK_NAME if not isExpansion else self.PANEL_BLOCK_KR_NAME
         )

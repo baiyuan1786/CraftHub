@@ -13,8 +13,10 @@ from ezdxf.math import Vec2
 from ....common.graph import NewBlock, 本期新增电源线, 现有设备
 from ...reader import DataUnitDDN
 
-from .pdu import PDUConnectionPanel
+from .pduBase import PDUConnectionPanel
 from .powerCabinet import PowerCabinetConnectionPanel2
+from .pdu32A1536W import PDU_32A1536W
+from .pdu63A3000W import PDU_63A3000W
 
 
 PowerCabinetTkA = Literal["10A", "16A", "20A", "32A", "63A"]
@@ -143,11 +145,21 @@ class DDNPowerLink(NewBlock):
         if not self.isUsePDU:
             return None
 
-        return PDUConnectionPanel(
-            doc=self.doc,
-            installPnum=self.pduInstallPnum,
-            isNew=self.isNewPDU
-        )
+        if self.powerCabinetTkA1 in ["40A", "32A"]:
+            # 使用32APDU试试
+            return PDU_32A1536W(
+                doc=self.doc,
+                installPnum=self.pduInstallPnum,
+                isNew=self.isNewPDU
+            )
+        elif self.powerCabinetTkA1 in ["63A"]:
+            return PDU_63A3000W(
+                doc=self.doc,
+                installPnum=self.pduInstallPnum,
+                isNew=self.isNewPDU
+            ) 
+        else:
+            raise ValueError(f"电源端子暂无匹配的PDU模型: {self.powerCabinetTkA1}")
 
     def _drawPowerLink(self):
         '''绘制电源连接图'''
@@ -215,18 +227,24 @@ class DDNPowerLink(NewBlock):
         if self.pduConnectionPanel is None:
             return
 
-        pduInPoint1 = self.pduConnectionPanel.inPoint(self.powerPoint1, self.insertPoint)
-        pduInPoint2 = self.pduConnectionPanel.inPoint(self.powerPoint2, self.insertPoint)
-        pduOutPoint1 = self.pduConnectionPanel.outPoint(self.powerPoint1, self.insertPoint)
-        pduOutPoint2 = self.pduConnectionPanel.outPoint(self.powerPoint2, self.insertPoint)
+        # 确认插入点坐标
+        pduInPoint1 = self.pduConnectionPanel.inPoint(self.insertPoint, "left")
+        pduInPoint2 = self.pduConnectionPanel.inPoint(self.insertPoint, "right")
+        pduOutPoint1 = self.pduConnectionPanel.outPoint(self.insertPoint, "left")
+        pduOutPoint2 = self.pduConnectionPanel.outPoint(self.insertPoint, "right")
 
-        self.addLine(self.powerPoint1, pduOutPoint1, 本期新增电源线())
-        self.addLine(self.powerPoint2, pduOutPoint2, 本期新增电源线())
+        self.addLine(self.powerPoint1, pduOutPoint1, 本期新增电源线(), polyLine = True, polyLineOrient = "y")
+        self.addLine(self.powerPoint2, pduOutPoint2, 本期新增电源线(), polyLine = True, polyLineOrient = "y")
 
         self.pduConnectionPanel.insertInto(self.block, self.insertPoint)
 
         pduToPowerCabinetLineType = 本期新增电源线() if self.isNewPDU else 现有设备()
 
+        # 更新屏柜插入点
+        powerCabinetPoint1 = Vec2(pduInPoint1.x, powerCabinetPoint1.y)
+        powerCabinetPoint2 = Vec2(pduInPoint2.x, powerCabinetPoint2.y)
+
+        # 确认插入点坐标
         self.addLine(pduInPoint1, powerCabinetPoint1, pduToPowerCabinetLineType)
         self.addLine(pduInPoint2, powerCabinetPoint2, pduToPowerCabinetLineType)
 

@@ -10,6 +10,8 @@ from ....common.meta import Device, ExistedDevice
 from typing import List
 import pandas as pd
 
+ROUTER_NAME = "综数网交换机"
+
 class cableLayTableOne:
     '''单个站的线缆敷设表'''
     def __init__(self, data: DataUnit) -> None:
@@ -153,7 +155,7 @@ class cableLayTableOne:
         
         if data.get("installCabinetType") == "新增":
             self.newLink(机柜接地线(startPos = f"{data.get('installPnum')} 新增机柜",
-                             endPos = "本机柜接地排"))
+                             endPos = "机房接地排"))
 
     def _buildFiberLink(self, data: DataUnit):
         '''铠装跳纤部分
@@ -199,9 +201,9 @@ class cableLayTableOne:
         
         self.newLink(铠装跳纤(specification = "单模LC-LC",
                             startPos = f"{data.get('installPnum')} 新增低端路由器",
-                            endPos = f"{area3DevNumList[0] if area3DevNumList else ''} idn交换机",
+                            endPos = f"{area3DevNumList[0] if area3DevNumList else ''} {ROUTER_NAME}",
                             num = fiberNum,
-                            note = f"至原有idn交换机",))
+                            note = f"至原有{ROUTER_NAME}",))
     
     def _buildNetLink(self, data: DataUnit):
         '''网线连接部分'''
@@ -217,11 +219,11 @@ class cableLayTableOne:
         
         startDev = f"{data.get('installPnum')} 新增低端路由器" # 路由器起始点
         
-        # 路由器电口成端(16个)
+        # 路由器电口成端(另外立项建设)(16个)
         if data.get("edgedIDFaltitudeU"):
             self.newLink(普通网线(startPos = startDev,
                                  endPos = f"{data.get('installPnum')} 新增路由器成端IDF",
-                                 note = "路由器电口成端",
+                                 note = "路由器电口成端(另外立项建设)",
                                  num = 16))
             startDev = f"{data.get('installPnum')} 新增路由器成端IDF" # 起始点替换为成端IDF
         
@@ -239,7 +241,7 @@ class cableLayTableOne:
         if data.get("GCNPnameList"):
             self.newLink(光速寻线以太网线缆(startPos = startDev,
                                         endPos = data.get("GCNPnameList")[0], # GCN网链路第一个屏
-                                        note = f"GCN网出线 至{data.get('GCNTargetStation')}"))
+                                        note = f"保底网出线 至{data.get('GCNTargetStation')}"))
         
         # 至四区防火墙(可能有)
         if area4DevNumList:
@@ -251,8 +253,8 @@ class cableLayTableOne:
         # 至原idn交换机网线(可能有)
         if data.get("IDNopticalModNum") is not None and data.get("IDNopticalModNum") < 2:
             self.newLink(光速寻线以太网线缆(startPos = startDev,
-                                        endPos = f"{area3DevNumList[0] if area3DevNumList else ''} idn交换机",
-                                        note = f"至原有idn交换机",))
+                                        endPos = f"{area3DevNumList[0] if area3DevNumList else ''} {ROUTER_NAME}",
+                                        note = f"至原有{ROUTER_NAME}",))
 
     def readExcel(self, subDF: DataFrame):
         '''读取已有表格， 尝试读取表格中已有的数据，填写线缆长度'''
@@ -321,10 +323,4 @@ class cableLayTableOne:
         dfList = [SubTitle(substationName = self.substationName).toDF()]
         dfList += [link.toDF(substationName = self.substationName, walkLine = self.walkLine) for link in self.linkList]
         return pd.concat(dfList)
-
-        
-
-        
-
-
 

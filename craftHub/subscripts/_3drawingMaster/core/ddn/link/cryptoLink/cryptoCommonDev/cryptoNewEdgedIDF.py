@@ -58,6 +58,7 @@ class CryptoNewEdgedIDF(CommonCryptoDev):
 
         self.panel: Optional[CDIDFConnectionPanel] = None
         self.insertPoint: Optional[Vec2] = None
+        self.direction = "left"
 
     def drawPanel(
             self,
@@ -71,7 +72,8 @@ class CryptoNewEdgedIDF(CommonCryptoDev):
         self.insertPoint = CDIDFConnectionPanel.insertPointFromFrontPoints(
             insertX=insertX,
             rtLinkPoint=rtCurrentPoint,
-            nrtLinkPoint=nrtCurrentPoint
+            nrtLinkPoint=nrtCurrentPoint,
+            direction=self.direction # type: ignore
         )
 
         self.panel = CDIDFConnectionPanel(
@@ -81,7 +83,8 @@ class CryptoNewEdgedIDF(CommonCryptoDev):
             portR=self.portR,
             portNR=self.portNR,
             insertPoint=self.insertPoint,
-            isCutBusiness=self.isCutBusiness
+            isCutBusiness=self.isCutBusiness,
+            direction=self.direction # type: ignore
         )
 
         self.panel.insertInto(owner.block)

@@ -3,7 +3,7 @@
 #   Authors:     BaiYuan <V:gzq395642104>
 ##########################################################################################################
 from ...graph.shape import TextBox
-from ...graph.line import 本期新增设备, 现有设备, 普通红色线02
+from ...graph.line import 本期新增设备, 现有设备, 普通红色线02, 非建设设备
 from ...graph.color import CADColor
 
 from ..unit import U2CM
@@ -30,6 +30,7 @@ class DeviceInCabinet(TextBox):
     NEW_LINE_TYPES = {"new", "replaced"}
     RED_TEXT_TYPES = {"remove", "replace"}
     NOTE_TYPES = {"remove", "replace", "replaced"}
+    NO_BUILD_TYPES = {"nobuild"}    # 不建设类型
 
     TYPE_TEXT_DICT = {
         "remove": "拆除",
@@ -92,6 +93,8 @@ class DeviceInCabinet(TextBox):
 
         if self.heightU < 2 and maxNameLineLen > 15:
             fontHeight *= 0.7
+        elif maxNameLineLen > 22:
+            fontHeight *= 0.7
 
         return fontHeight
 
@@ -100,6 +103,8 @@ class DeviceInCabinet(TextBox):
 
         if self.devType in self.NEW_LINE_TYPES:
             return 本期新增设备()
+        elif self.devType in self.NO_BUILD_TYPES:
+            return 非建设设备()
 
         return 现有设备()
 
@@ -108,6 +113,8 @@ class DeviceInCabinet(TextBox):
 
         if self.devType in self.RED_TEXT_TYPES:
             return CADColor.toIndex("红色")
+        elif self.devType in self.NO_BUILD_TYPES:
+            return CADColor.toIndex("灰色")
 
         return CADColor.toIndex("白色")
 

@@ -3,6 +3,7 @@
 #   Authors:     BaiYuan <V:gzq395642104>
 ##########################################################################################################
 from ....common.graph import NewBlock, TextBox, CADColor
+from ....common.graph import 非建设设备, 现有设备
 
 from ezdxf.document import Drawing
 from ezdxf.math import Vec2
@@ -23,8 +24,8 @@ class Area3DeviceConnectionPanel(NewBlock):
                  devName: Optional[str],
                  pNum: Optional[str] = None,
                  pName: Optional[str] = None,
-                 textLine: int = 1
-                 
+                 textLine: int = 1,
+                 isBuild: bool = True
                  ) -> None:
         """配电屏连接面板图初始化
 
@@ -35,6 +36,7 @@ class Area3DeviceConnectionPanel(NewBlock):
         :param pNum: 屏名称, 例如 直流配电设备1屏, 如果屏和设备数字相同可不填
         :param pName: 设备名称, 例如 "IDF配线单元", 可不填
         :param textLine: 文本行数
+        :param isBuild: 是否是已建设或需要建设设备
         """
         super().__init__(doc)
         
@@ -51,26 +53,41 @@ class Area3DeviceConnectionPanel(NewBlock):
         self.devNum = devNum
         self.devName = devName
         self.width = 30.4
+        self.isBuild = isBuild
         
         # 插入双文本框
         textBoxPort = TextBox(doc = doc, 
                               boxWidth = self.width, 
                               boxHeight = 7.27,
                               textFontHeight = 2.16,
-                              textContent = self.port,
-                              textStyle = "GEDITXT")
+                              textContent = self._coloredText(self.port),
+                              textStyle = "GEDITXT",
+                              boxLine = self._boxLine())
         
         textBoxName = TextBox(doc = doc, 
                               boxWidth = self.width, 
                               boxHeight = 14.5,
                               textFontHeight = 2.88,
-                              textContent = self.fullName,
-                              textStyle = "GEDITXT")
+                              textContent = self._coloredText(self.fullName),
+                              textStyle = "GEDITXT",
+                              boxLine = self._boxLine())
         
         textBoxPort.insertInto(self.block, Vec2(0, 14.5))
         textBoxName.insertInto(self.block, Vec2(0, 0))
         
+    def _coloredText(self, text: str):
+        if self.isBuild:
+            return text
+        else:
+            return CADColor.colored(text, "灰色")
         
+    def _boxLine(self):
+        '''边框线'''
+        if self.isBuild:
+            return 现有设备()
+        else:
+            return 非建设设备()
+
     @staticmethod
     def leftPoint(offset: Vec2 = Vec2(0, 0)):
         '''左接口点'''

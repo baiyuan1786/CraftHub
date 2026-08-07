@@ -78,31 +78,51 @@ class CustomBlock:
         cls.blockCount = blockCount
  
     def addRectangle(self,
-                     width: float,
-                     height: float,
-                     line: Line,
-                     insertPoint: Vec2 = Vec2(0, 0),
-                     ):
+                    width: float,
+                    height: float,
+                    line: Line,
+                    insertPoint: Vec2 = Vec2(0, 0),
+                    isFill: bool = False
+                    ):
         """向块中添加矩形
 
         :param insertPoint: 起始点, 选作左下角点
         :param width: 宽度
         :param height: 高度
         :param line: 绘图线格式
-        """      
-        
+        :param isFill: 是否增加ANSI31红色斜线填充
+        """
+
         points = [
-            insertPoint,                       # 左下
-            insertPoint + Vec2(width, 0),      # 右下                    
-            insertPoint + Vec2(width, height), # 右上
-            insertPoint + Vec2(0, height)      # 左上
+            insertPoint,                        # 左下
+            insertPoint + Vec2(width, 0),       # 右下
+            insertPoint + Vec2(width, height),  # 右上
+            insertPoint + Vec2(0, height)       # 左上
         ]
 
-        # 创建矩形
+        if isFill:
+            hatch = self.block.add_hatch()
+
+            hatch.set_pattern_fill(
+                name="ANSI31",
+                scale=1.0,
+                angle=0,
+                color=CADColor.toIndex("红色")
+            )
+
+            hatch.paths.add_polyline_path(
+                [
+                    (point.x, point.y)
+                    for point in points
+                ],
+                is_closed=True
+            )
+
+        # 创建矩形边框
         self.block.add_lwpolyline(
-            points = points,
-            close = True,
-            dxfattribs = line.attributes
+            points=points,
+            close=True,
+            dxfattribs=line.attributes
         )
         
     def addMtext(self,
@@ -113,7 +133,8 @@ class CustomBlock:
                  textLineSpacingDistance: float = 1,
                  insertPoint: Vec2 = Vec2(0, 0),
                  style: str = "Standard",
-                 attachment: int = 5):
+                 attachment: int = 5,
+                 rotation: int = 0):
         """插入多行文本框
 
         :param textContent: 文本内容
@@ -124,9 +145,10 @@ class CustomBlock:
         :param insertPoint: 插入点, 一般选择中心位置插入, 需计算中心位置
         :param style: 字体样式
         :param attachment: 对齐方式, 1左上 2 上中 3 右上, 4 左中, 5 正中, 6 右中, 7 左下, 8 下中, 9 右下 
+        :param rotation: 逆时针旋转角度
         """        
         
-        self.block.add_mtext(
+        return self.block.add_mtext(
             text = textContent,
             dxfattribs={
                 'insert': insertPoint,                                  # 插入点
@@ -140,6 +162,7 @@ class CustomBlock:
 
                 # 其他可能的属性
                 'line_spacing_style': 1,  # 1 = 精确间距
+                "rotation": rotation,
             }
         )
         
@@ -157,7 +180,8 @@ class CustomBlock:
                 line2StartOffset: Optional[Vec2] = None,
                 polyLine: bool = False,
                 polyLineOrient: Literal["x", "y"] = "x",
-                polyLineMiddleOffset: Optional[Vec2] = None):
+                polyLineMiddleOffset: Optional[Vec2] = None,
+                polyLineFirstLineLen: Optional[float] = None):
         """画一条直线或折线
 
         :param startPoint: 起点
@@ -174,6 +198,7 @@ class CustomBlock:
         :param polyLine: 是否绘制折线, defaults to False
         :param polyLineOrient: 多段线偏移方向, 影响折线往哪个方向拐
         :param polyLineMiddleOffset: 多段线中点偏移
+        :param polyLineFirstLineLen: 多段线第一段线长度
         """
 
         offsetDict = {
@@ -195,7 +220,10 @@ class CustomBlock:
                 polyLineMiddleOffset = Vec2(0, 0)
 
             if polyLineOrient == "x":
-                middleX = (startPoint.x + endPoint.x) / 2
+                if polyLineFirstLineLen is not None:
+                    middleX = startPoint.x + polyLineFirstLineLen
+                else:
+                    middleX = (startPoint.x + endPoint.x) / 2
 
                 pointList = [
                     startPoint,
@@ -204,7 +232,10 @@ class CustomBlock:
                     endPoint
                 ]
             else:
-                middleY = (startPoint.y + endPoint.y) / 2
+                if polyLineFirstLineLen is not None:
+                    middleY = startPoint.y + polyLineFirstLineLen
+                else:
+                    middleY = (startPoint.y + endPoint.y) / 2
 
                 pointList = [
                     startPoint,
@@ -252,6 +283,17 @@ class CustomBlock:
                 self.block.add_lwpolyline(
                     points=currentPointList,
                     dxfattribs=currentLine.attributes
+                )
+                
+            # 插入文本
+            if text is not None:
+                self.addMtext(
+                    textContent=text,
+                    textFontHeight=2.16,
+                    textWidth=len(text) * 4,
+                    style="GEDITXT",
+                    insertPoint= (pointList[-1] + pointList[-2]) / 2 + Vec2(0, 1),
+                    attachment = 8
                 )
 
             # 多段线标记
@@ -344,7 +386,7 @@ class CustomBlock:
                 text=note
             )
 
-        def drawLineText():
+        def drawLineText(text: Optional[str]):
             """绘制线上的文本说明"""
             if text is None:
                 return
@@ -403,7 +445,7 @@ class CustomBlock:
         drawBaseLine()
         drawParallelLines()
         drawCenterNote()
-        drawLineText()
+        drawLineText(text=text)
         drawFork()
         drawArrow()
             

@@ -182,14 +182,14 @@ class ConnectionMap(NewBlock):
                 port = "端口1"
                 lineNum = 1
             
-            idfConPanel = Area3DeviceConnectionPanel(self.doc, port, data.get("installPnum"), CADColor.colored("本期新增成端IDF"))
+            idfConPanel = Area3DeviceConnectionPanel(self.doc, port, data.get("installPnum"), "另外立项建设IDF", isBuild = False)
             offsetArea3 += rightOffset1
             idfConPanel.insertInto(self.block, offsetArea3)
 
             pointRight = Area3DeviceConnectionPanel.leftPoint(offset = offsetArea3) # 更新右侧点
             self.addLine(pointLeft,
                         pointRight,
-                        line = 本期新增网线(),
+                        line = 本期新增网线().colored("灰色"),
                         num = lineNum,
                         offsetOrient = "y")
             pointLeft = Area3DeviceConnectionPanel.rightPoint(offset = offsetArea3) # 更新左侧点
@@ -347,12 +347,12 @@ class ConnectionMap(NewBlock):
         else:
             # 需要连接一根网线到IDF
             if self.data.get("edgedIDFaltitudeU"):
-                newIDFdevice = Area3DeviceConnectionPanel(self.doc, "端口4", self.data.get("installPnum"), CADColor.colored("本期新增成端IDF"))
+                newIDFdevice = Area3DeviceConnectionPanel(self.doc, "端口4", self.data.get("installPnum"), "另外立项建设IDF", isBuild = False)
                 newIDFdevice.insertInto(self.block, IDFPoint)
                 
                 self.addLine(self.deviceConPanel.board6Point() + Vec2(3, 5.2), 
                             newIDFdevice.upPoint(IDFPoint), 
-                            line = 本期新增网线(),
+                            line = 本期新增网线().colored("灰色"),
                             polyLine = True,
                             polyLineOrient = "y")
                 self.addLine(newIDFdevice.downPoint(IDFPoint), 
@@ -398,7 +398,7 @@ class ConnectionMap(NewBlock):
                      text = "利旧现有电缆",
                      arrow = True)
         
-        self.addMtext(textContent = "至各idn业务",
+        self.addMtext(textContent = "至各综合数据网业务",
                         textFontHeight = 2.88,
                         textWidth = 28.93,
                         style = "GEDITXT",

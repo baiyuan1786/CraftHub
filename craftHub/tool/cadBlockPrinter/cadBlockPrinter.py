@@ -379,7 +379,11 @@ class CadBlockPrinter(Page):
             if pdfPath.resolve() != mergedPdfPath.resolve()
         ]
 
-        pdfPathList.sort(key=lambda path: path.name.lower())
+        try:
+            # 按-切割
+            pdfPathList.sort(key=lambda path: int(path.stem.split("-")[-1]))
+        except Exception as e:
+            pdfPathList.sort(key=lambda path: path.name.lower())
 
         if not pdfPathList:
             raise RuntimeError("导出目录中没有找到PDF文件")

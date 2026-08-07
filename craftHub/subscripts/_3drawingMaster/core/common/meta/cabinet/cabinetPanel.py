@@ -5,7 +5,7 @@
 from ..device.deviceInCabinet import DeviceInCabinet
 
 from ...graph import NewBlock
-from ...graph import 本期占用机柜, 本期新增机柜Panel, 现有设备, 普通黄色线, 灰色边框虚线
+from ...graph import 本期占用机柜, 本期新增机柜Panel, 现有设备, 普通黄色线, 灰色边框虚线, 普通白色粗实线
 from ...graph import CADColor
 
 from ..unit import U, U2CM
@@ -28,7 +28,8 @@ class CabinetPanel(NewBlock):
                  name: str, 
                  height: int = 220,
                  width: int = 60,
-                 isNew: bool = False
+                 isNew: bool = False,
+                 withGroudLine = False
                  ) -> None:
         """屏柜初始化
 
@@ -38,6 +39,7 @@ class CabinetPanel(NewBlock):
         :param height:  高, cm
         :param width:   宽, cm
         :param isNew:   面板图只有利旧和新增的区别
+        :param withGroudLine: 绘制屏柜接地线
         """        
         
         super().__init__(doc = doc)
@@ -133,6 +135,26 @@ class CabinetPanel(NewBlock):
             insertPoint = Vec2(self.width / 2, 0 - 7),
             style = "天联"
         )
+        
+        # 添加接地线绘制
+        if withGroudLine:
+            self._addGL()
+        
+    def _addGL(self):
+        """添加设备接地线"""
+        
+        # 一根竖线三根横线组成
+        y = DeviceInCabinet.INSIDE_START_POINT.y
+        basePoint = Vec2(0, y)
+        self.addLine(startPoint = basePoint, endPoint = basePoint - Vec2(11.6, 0), line = 普通白色粗实线())
+        basePoint -= Vec2(11.6, 0)
+        self.addLine(startPoint = basePoint, endPoint = basePoint - Vec2(0, 6), line = 普通白色粗实线())
+        basePoint -= Vec2(0, 6)
+        self.addLine(startPoint = basePoint - Vec2(2.7, 0), endPoint = basePoint + Vec2(2.7, 0), line = 普通白色粗实线())
+        basePoint -= Vec2(0, 1)
+        self.addLine(startPoint = basePoint - Vec2(2.1, 0), endPoint = basePoint + Vec2(2.1, 0), line = 普通白色粗实线())
+        basePoint -= Vec2(0, 1)
+        self.addLine(startPoint = basePoint - Vec2(1.3, 0), endPoint = basePoint + Vec2(1.3, 0), line = 普通白色粗实线())
 
     def addDevice(self,
                   device: DeviceInCabinet):

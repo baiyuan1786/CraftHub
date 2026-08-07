@@ -15,7 +15,11 @@ class GCNLinkData:
 
     DATA_KEY_GCN_PNUM = "GCNPnum"
     DATA_KEY_GCN_PNAME = "GCNPname"
-    DATA_KEY_GCN_IDF_UNIT_LIST = "GCNIDFunitList"
+    DATA_KEY_GCN_EXISTED_EDGED_IDF = "GCNexistedEdgedIDF"
+
+    DATA_KEY_GCN_IS_EXPANSION = "GCNisExpansion"
+    DATA_KEY_GCN_ETH_SLOT_LIST = "GCNETHslotList"
+    DATA_KEY_GCN_NEW_ETH_SLOT_EDGED_IDF = "GCNnewETHslotEdgedIDF"
     DATA_KEY_GCN_TARGET_STATION_LIST = "GCNTargetStationList"
     DATA_KEY_GCN_LINK_BOARD_LIST = "GCNLinkBoardList"
     DATA_KEY_GCN_BOARD_NAME = "GCNBoardName"
@@ -44,17 +48,23 @@ class GCNLinkData:
         self.edgedIDFData = self._buildEdgedIDFData()
 
     def _buildDeviceData(self) -> GCNDeviceData:
-        '''构建GCN网传输设备数据'''
+        '''构建保底通信网传输设备数据'''
 
         return GCNDeviceData(
             pNum=self.data.get(self.DATA_KEY_GCN_PNUM),
             pName=self.data.get(self.DATA_KEY_GCN_PNAME),
             boardName=self.data.get(self.DATA_KEY_GCN_BOARD_NAME),
             areaName=self.data.get(self.DATA_KEY_GCN_AREA_NAME),
-            idfUnitList=self.data.get(self.DATA_KEY_GCN_IDF_UNIT_LIST),
+
+            existedEdgedIDF=self.data.get(self.DATA_KEY_GCN_EXISTED_EDGED_IDF),
+
             targetStationList=self.data.get(self.DATA_KEY_GCN_TARGET_STATION_LIST),
             linkBoardList=self.data.get(self.DATA_KEY_GCN_LINK_BOARD_LIST),
-            slotNumList=self.data.get(self.DATA_KEY_GCN_SLOT_LIST)
+            slotNumList=self.data.get(self.DATA_KEY_GCN_SLOT_LIST),
+
+            isExpansion=self.data.get(self.DATA_KEY_GCN_IS_EXPANSION),
+            ethSlotRawList=self.data.get(self.DATA_KEY_GCN_ETH_SLOT_LIST),
+            newETHslotEdgedIDF=self.data.get(self.DATA_KEY_GCN_NEW_ETH_SLOT_EDGED_IDF)
         )
 
     def _buildEdgedIDFData(self) -> Optional[EdgedIDFData]:
@@ -164,9 +174,12 @@ class GCNLinkData:
         return self.deviceData.iterLinkItem()
 
     def getIDFUnitList(self) -> List[str]:
-        '''获取IDF跳接单元列表'''
+        '''获取已有GCN设备成端IDF列表'''
 
-        return self.deviceData.idfUnitList
+        if not self.deviceData.hasExistedEdgedIDF():
+            return []
+
+        return [self.deviceData.existedEdgedIDF] # type: ignore
 
     def getLinkItemDataList(self) -> List[GCNLinkItemData]:
         '''获取GCN网出局链路数据列表'''
@@ -177,3 +190,18 @@ class GCNLinkData:
         '''判断是否存在IDF跳接单元'''
 
         return self.deviceData.hasIDFUnit()
+    
+    def isExpansion(self) -> bool:
+        '''判断是否为保底网扩容'''
+
+        return self.deviceData.isExpansion
+
+    def getExistedEdgedIDF(self) -> str:
+        '''获取已有GCN设备成端IDF'''
+
+        return self.deviceData.existedEdgedIDF # type: ignore
+
+    def getNewETHslotEdgedIDF(self) -> str:
+        '''获取新增以太网板卡成端IDF'''
+
+        return self.deviceData.newETHslotEdgedIDF # type: ignore

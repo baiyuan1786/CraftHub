@@ -3,6 +3,7 @@
 #   Authors:     BaiYuan <V:gzq395642104>
 ##########################################################################################################
 from .lineType import LineType
+from ..color import CADColor
 
 class Line:
     '''线条基类'''
@@ -29,6 +30,11 @@ class Line:
         self.lineWeight = lineWeight
         self.ltscale = ltscale
         self.const_width = const_width
+        
+    def colored(self, colorName: str):
+        '''更新线条颜色'''
+        self.color = CADColor.toIndex(colorName)
+        return self
         
     @property
     def attributes(self):

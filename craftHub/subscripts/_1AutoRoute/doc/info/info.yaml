@@ -1,7 +1,7 @@
 author: 谷沼桥
-enable: true
+enable: false
 link: void
 name: AutoRoute
 readme: AutoRoute使用说明_v0.1.docx
 type: logAnalyse
-version: v0.1
+version: v0.2

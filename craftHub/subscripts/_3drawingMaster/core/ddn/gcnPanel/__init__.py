@@ -1,8 +1,5 @@
 ##########################################################################################################
-#   Description: GCN网连接
+#   Description: gcn扩容设备
 #   Authors:     BaiYuan <V:gzq395642104>
 ##########################################################################################################
-from .gcnExpansionLink import GCNExpansionLink
-from .gcnLinkData import GCNLinkData
-from .gcnNormalLink import GCNNormalLink
-
+from .gcnPanel import GCNpanel

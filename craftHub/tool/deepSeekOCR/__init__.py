@@ -1,8 +1,5 @@
 ##########################################################################################################
-#   Description: GCN网连接
-#   Authors:     BaiYuan <V:gzq395642104>
+#   Description: 快速OCR工具
+#   Authors:     BaiYuan <395642104@qq.com>
 ##########################################################################################################
-from .gcnExpansionLink import GCNExpansionLink
-from .gcnLinkData import GCNLinkData
-from .gcnNormalLink import GCNNormalLink
-
+from .deepSeekOcrPage import DeepSeekOcrPage

@@ -14,6 +14,8 @@ from ...common.meta import FrameA3plus, FrameA3plusplus
 from ..reader import DataUnitDDN
 from .substationLeft import DDNsubplotter_left
 from .substationRight import DDNsubplotter_right
+from .substaionRightA3Plus import DDNsubplotter_rightA3plus
+from .substaionRightA3PlusPlus import DDNsubplotter_rightA3plusplus
 
 
 class DDNsubplotter:
@@ -89,13 +91,23 @@ class DDNsubplotter:
         if not data.get("DDNisNewPDU"):
             data.set("DDNPDUAltitudeU", None)
 
-        self.rightPlotter = DDNsubplotter_right(
-            doc=self.doc,
-            data=data,
-            config=self.config,
-            PROJECTNAME=self.PROJECTNAME,
-            DRAWINGNAME=f"{self.substationName}{self.roomName}新增设备/板卡安装图",
-        )
+        # 分扩容和不扩容两种情况
+        if data.get("GCNisExpansion"):
+            self.rightPlotter = DDNsubplotter_rightA3plusplus(
+                doc=self.doc,
+                data=data,
+                config=self.config,
+                PROJECTNAME=self.PROJECTNAME,
+                DRAWINGNAME=f"{self.substationName}{self.roomName}新增设备/板卡安装图",
+            )
+        else:
+            self.rightPlotter = DDNsubplotter_rightA3plus(
+                doc=self.doc,
+                data=data,
+                config=self.config,
+                PROJECTNAME=self.PROJECTNAME,
+                DRAWINGNAME=f"{self.substationName}{self.roomName}新增设备/板卡安装图",
+            )
 
         self.leftPlotter = DDNsubplotter_left(
             doc=self.doc,

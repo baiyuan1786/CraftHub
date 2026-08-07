@@ -23,9 +23,10 @@ class EdgedIDF(Device):
     def __init__(self, 
                  altitudeU: int) -> None:
 
-        name = "本期新增路由器成端IDF"
+        # name = "本期新增路由器成端IDF"
+        name = "另外立项建设IDF"
         heightU = 1
-        super().__init__(name, altitudeU, heightU, "new")
+        super().__init__(name, altitudeU, heightU, "nobuild")
 
     def toDevicePanel(self, doc: Drawing):
         '''转换设备面板图'''

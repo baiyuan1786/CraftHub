@@ -3,6 +3,7 @@
 #                提供A3+, A3++等标准图框
 #   Authors:     BaiYuan <V:gzq395642104>
 ##########################################################################################################
+from .base import FrameBase
 from .frameA3plus import FrameA3plus
 from .frameA3plusplus import FrameA3plusplus
 from .frameCabinet import FrameCabinetA3plus

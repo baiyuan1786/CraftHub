@@ -10,11 +10,11 @@ from ezdxf.layouts.blocklayout import BlockLayout
 from ezdxf.layouts.layout import Modelspace
 from ezdxf.math import Vec2
 
-from ....common.graph import NewBlock
+from ....common.graph import CADColor, NewBlock
 from ....common.graph import 本期新增网线, 现有互联六类电缆, 逻辑连线示意
+from .cryptoCommonDev import CommonCryptoDev, CryptoChannel, CryptoDeviceType
 
 from ...reader import DataUnitDDN
-from .cryptoCommonDev import CommonCryptoDev, CryptoChannel
 from .parser import CryptoLinkReader
 from .room2FrameManager import Room2FrameManager
 
@@ -61,6 +61,9 @@ class LinkDecision:
     def text(self) -> Optional[str]:
         '''连接线文字'''
 
+        if self.style == LinkStyle.LEGACY:
+            return self.LOGIC_TEXT
+
         if self.style == LinkStyle.LOGIC:
             return self.LOGIC_TEXT
 
@@ -83,6 +86,14 @@ class CryptoLink(NewBlock):
     NO_PHOTO_TEXT_WIDTH = 60
     NO_PHOTO_TEXT_ATTACHMENT = 4  # 左中对齐
     
+    FIRST_EDGED_IDF_DIRECTION = "right"
+
+    FIRST_EDGED_IDF_NOTE_TEXT = "敷设新网线至原设备\n成端IDF配线单元后端"
+    FIRST_EDGED_IDF_NOTE_FONT_HEIGHT = 3
+    FIRST_EDGED_IDF_NOTE_WIDTH = 80
+    FIRST_EDGED_IDF_NOTE_OFFSET = Vec2(0, -4.4)
+    FIRST_EDGED_IDF_NOTE_ATTACHMENT = 2  # 上中对齐
+
     def __init__(
             self,
             doc: Drawing,
@@ -125,13 +136,13 @@ class CryptoLink(NewBlock):
     def _build(self):
         '''构建纵向加密连接图'''
 
-        rawDeviceList = self.reader.toDeviceList()
-        drawDeviceList = self._toDrawDeviceList(rawDeviceList)
+        rawDeviceList = self.reader.toDeviceList()  # 获取全部设备列表
+        drawDeviceList = self._toDrawDeviceList(rawDeviceList)  # 过滤NP， 简化设备处理
 
-        for device in drawDeviceList:
-            self._drawDevice(device)
+        for deviceIndex, device in enumerate(drawDeviceList):
+            self._drawDevice(device, deviceIndex)    # 逐个绘制设备
 
-        self.room2FrameManager.drawInto(self)
+        self.room2FrameManager.drawInto(self)   # 绘制第二房间框
 
     def _toDrawDeviceList(
             self,
@@ -176,17 +187,47 @@ class CryptoLink(NewBlock):
 
         return deviceList
 
-    def _drawDevice(self, device: CommonCryptoDev):
+    def _prepareFirstEdgedIDF(
+            self,
+            device: CommonCryptoDev,
+            deviceIndex: int
+    ):
+        '''准备第一个成端IDF绘制参数'''
+
+        if deviceIndex != 0:
+            return
+
+        if not self._isEdgedIDF(device):
+            return
+
+        setattr(device, "direction", self.FIRST_EDGED_IDF_DIRECTION)
+
+
+    def _isEdgedIDF(
+            self,
+            device: CommonCryptoDev
+    ) -> bool:
+        '''判断是否为成端IDF'''
+
+        return device.deviceType in [
+            CryptoDeviceType.NEW_EDGED_IDF,
+            CryptoDeviceType.EXISTED_EDGED_IDF
+        ]
+
+    def _drawDevice(self, device: CommonCryptoDev, deviceIndex: int):
         '''绘制一个设备节点'''
 
+        # 绘制未拍摄设备
         if device.isNoPhoto:
             self._drawNoPhotoDevice(device)
             self.lastDevice = device
             return
 
-        linkDecision = self._getLinkDecision(device)
-        insertX = self._getDeviceInsertX(linkDecision)
+        # 绘制已拍摄设备
+        linkDecision = self._getLinkDecision(device)    # 获取连线类型
+        insertX = self._getDeviceInsertX(linkDecision)  # 获取插入X坐标
 
+        self._prepareFirstEdgedIDF(device, deviceIndex)
         panelWidth = device.drawPanel(
             owner=self,
             insertX=insertX,
@@ -198,7 +239,8 @@ class CryptoLink(NewBlock):
             self._drawChannelLine(
                 device=device,
                 channel=channel,
-                linkDecision=linkDecision
+                linkDecision=linkDecision,
+                deviceIndex = deviceIndex
             )
 
         device.recordRoom2Panel(self)
@@ -344,9 +386,13 @@ class CryptoLink(NewBlock):
             self,
             device: CommonCryptoDev,
             channel: str,
-            linkDecision: LinkDecision
+            linkDecision: LinkDecision,
+            deviceIndex: int
     ):
         '''绘制指定通道连接线'''
+        
+        # 特殊修改， 第一条线总是绘制两条线
+        lineNum = 2 if deviceIndex == 0 else 1
 
         if channel == CryptoChannel.RT:
             startPoint = self.rtCurrentPoint
@@ -361,14 +407,16 @@ class CryptoLink(NewBlock):
                     endPoint=frontPoint,
                     line=linkDecision.line(),
                     arrow=linkDecision.arrow(),
-                    text=linkDecision.text()
+                    text=linkDecision.text(),
+                    num=lineNum,
+                    offsetOrient="y"
                 )
 
             self.rtCurrentPoint = afterPoint
             self.rtCurrentPortName = afterPortName
             return
 
-        if channel == CryptoChannel.NRT:
+        elif channel == CryptoChannel.NRT:
             startPoint = self.nrtCurrentPoint
             startPortName = self.nrtCurrentPortName
 
@@ -381,14 +429,59 @@ class CryptoLink(NewBlock):
                     endPoint=frontPoint,
                     line=linkDecision.line(),
                     arrow=linkDecision.arrow(),
-                    text=linkDecision.text()
+                    text=linkDecision.text(),
+                    num=lineNum,
+                    offsetOrient="y"
                 )
+
+                if self._shouldDrawFirstEdgedIDFNote(device, channel, deviceIndex):
+                    self._drawFirstEdgedIDFNote(
+                        startPoint=startPoint,
+                        endPoint=frontPoint
+                    )
 
             self.nrtCurrentPoint = afterPoint
             self.nrtCurrentPortName = afterPortName
             return
 
         raise ValueError(f"未知纵向加密链路通道: {channel}")
+
+    def _shouldDrawFirstEdgedIDFNote(
+            self,
+            device: CommonCryptoDev,
+            channel: str,
+            deviceIndex: int
+    ) -> bool:
+        '''是否绘制第一个成端IDF说明文字'''
+
+        if deviceIndex != 0:
+            return False
+
+        if channel != CryptoChannel.NRT:
+            return False
+
+        return self._isEdgedIDF(device)
+
+
+    def _drawFirstEdgedIDFNote(
+            self,
+            startPoint: Vec2,
+            endPoint: Vec2
+    ):
+        '''绘制第一个成端IDF说明文字'''
+
+        centerPoint = (startPoint + endPoint) / 2
+
+        self.addMtext(
+            textContent=self.FIRST_EDGED_IDF_NOTE_TEXT,
+            textFontHeight=self.FIRST_EDGED_IDF_NOTE_FONT_HEIGHT,
+            textWidth=self.FIRST_EDGED_IDF_NOTE_WIDTH,
+            textColor=CADColor.toIndex("红色"),
+            textLineSpacingDistance=1,
+            insertPoint=centerPoint + self.FIRST_EDGED_IDF_NOTE_OFFSET,
+            style="gedi",
+            attachment=self.FIRST_EDGED_IDF_NOTE_ATTACHMENT
+        )
 
     def _getLinkDecision(self, currentDevice: CommonCryptoDev) -> LinkDecision:
         '''获取当前设备接入线绘制决策'''

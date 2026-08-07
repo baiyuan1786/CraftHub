@@ -5,7 +5,7 @@
 
 import re
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List, Optional, Literal
 
 from ....reader import DataUnitDDN
 from ..cryptoCommonDev import (
@@ -15,7 +15,8 @@ from ..cryptoCommonDev import (
     CryptoExistedEdgedIDF,
     CryptoNewEdgedIDF,
     CryptoNormalIDF,
-    CryptoAccessSwitch
+    CryptoAccessSwitch,
+    CryptoRoomConnectedIDF
 )
 
 from ..cryptoCommonDev import CryptoDeviceType
@@ -120,6 +121,9 @@ class CryptoLinkReader:
 
         self._initRawData()
         self._initDeviceList()
+        
+        
+        
         self._checkDeviceList()
 
     def _initRawData(self):
@@ -239,10 +243,13 @@ class CryptoLinkReader:
             )
 
     def _appendCryptoDevPair(self):
-        '''追加纵向加密设备对'''
+        '''添加纵向加密设备对'''
 
         rtCDUnit = self.rtDevUnitList[-1]
         nrtCDUnit = self.nrtDevUnitList[-1]
+
+        rtPort = self.rtPortList[-1]
+        nrtPort = self.nrtPortList[-1]
 
         self.deviceList.append(
             CryptoDevPair(
@@ -250,6 +257,8 @@ class CryptoLinkReader:
                 rtPname=self.data.get(self.DATA_KEY_RTCD_PNAME),
                 nrtPnum=nrtCDUnit.value,
                 nrtPname=self.data.get(self.DATA_KEY_NRTCD_PNAME),
+                rtPort=rtPort,
+                nrtPort=nrtPort,
                 rtIsRoom2=rtCDUnit.isRoom2(),
                 nrtIsRoom2=nrtCDUnit.isRoom2(),
                 rtIsJump=rtCDUnit.isJump(),
@@ -287,6 +296,92 @@ class CryptoLinkReader:
                 return False
 
         return True
+
+    def _parseRoomConnectedIDF(
+            self,
+            deviceList: List[CommonCryptoDev]
+    ) -> List[CommonCryptoDev]:
+        '''解析机房互联IDF'''
+
+        resultDeviceList = list(deviceList)
+
+        room2BoundaryRightIndex = self._getRoom2BoundaryRightIndex(resultDeviceList)
+
+        if room2BoundaryRightIndex is None:
+            return resultDeviceList
+
+        if room2BoundaryRightIndex == 0:
+            return resultDeviceList
+
+        room2BoundaryLeftIndex = room2BoundaryRightIndex - 1
+
+        leftDevice = resultDeviceList[room2BoundaryLeftIndex]
+        rightDevice = resultDeviceList[room2BoundaryRightIndex]
+
+        if not self._isNormalOldIDF(leftDevice):
+            return resultDeviceList
+
+        if not self._isNormalOldIDF(rightDevice):
+            return resultDeviceList
+
+        resultDeviceList[room2BoundaryLeftIndex] = self._toRoomConnectedIDF(
+            device=leftDevice,
+            direction=CryptoRoomConnectedIDF.DIRECTION_LEFT
+        )
+
+        resultDeviceList[room2BoundaryRightIndex] = self._toRoomConnectedIDF(
+            device=rightDevice,
+            direction=CryptoRoomConnectedIDF.DIRECTION_RIGHT
+        )
+
+        return resultDeviceList
+
+    def _getRoom2BoundaryRightIndex(
+            self,
+            deviceList: List[CommonCryptoDev]
+    ) -> Optional[int]:
+        '''获取第二机房边界右侧设备索引'''
+
+        for index, device in enumerate(deviceList):
+            if device.isRoom2:
+                return index
+
+        return None
+    
+    def _isNormalOldIDF(
+            self,
+            device: CommonCryptoDev
+    ) -> bool:
+        '''判断设备是否为普通旧IDF'''
+
+        if device.deviceType != CryptoDeviceType.NORMAL_IDF:
+            return False
+
+        if device.isNew:
+            return False
+
+        return True
+
+    def _toRoomConnectedIDF(
+            self,
+            device: CommonCryptoDev,
+            direction: Literal["left", "right"]
+    ) -> CryptoRoomConnectedIDF:
+        '''将普通IDF转换为机房互联IDF'''
+
+        if device.deviceNum is None:
+            raise ValueError("机房互联IDF设备号不能为空")
+
+        return CryptoRoomConnectedIDF(
+            deviceNum=device.deviceNum,
+            portR=getattr(device, "portR"),
+            portNR=getattr(device, "portNR"),
+            direction=direction,
+            isRoom2=device.isRoom2,
+            isJump=device.isJump,
+            isNoPhoto=device.isNoPhoto,
+            isCutBusiness=getattr(device, "isCutBusiness", False)
+        )
 
     def _checkDeviceList(self):
         '''校验设备列表合法性'''
@@ -402,14 +497,11 @@ class CryptoLinkReader:
 
         return currentDevice.deviceNum == nextDevice.deviceNum
 
-    def toDeviceList(self) -> List[CommonCryptoDev]:
-        '''输出设备列表，并将连续同设备号的旧普通IDF合并为接入交换机'''
-
-        deviceList = [
-            device
-            for device in self.deviceList
-            if not device.isJump
-        ]
+    def _mergeAccessSwitch(
+            self,
+            deviceList: List[CommonCryptoDev]
+    ) -> List[CommonCryptoDev]:
+        '''合并接入交换机'''
 
         resultDeviceList: List[CommonCryptoDev] = []
         index = 0
@@ -429,13 +521,16 @@ class CryptoLinkReader:
                     nextDevice=nextDevice
                 )
 
+                assert isinstance(currentDevice, CryptoNormalIDF)
+                assert isinstance(nextDevice, CryptoNormalIDF)
+
                 resultDeviceList.append(
                     CryptoAccessSwitch(
                         deviceNum=currentDevice.deviceNum, # type: ignore
-                        frontPort1=currentDevice.portR, # type: ignore
-                        frontPort2=currentDevice.portNR, # type: ignore
-                        afterPort1=nextDevice.portR, # type: ignore
-                        afterPort2=nextDevice.portNR, # type: ignore
+                        frontPort1=currentDevice.portR,
+                        frontPort2=currentDevice.portNR,
+                        afterPort1=nextDevice.portR,
+                        afterPort2=nextDevice.portNR,
                         isRoom2=currentDevice.isRoom2 or nextDevice.isRoom2,
                         isNoPhoto=currentDevice.isNoPhoto or nextDevice.isNoPhoto
                     )
@@ -448,3 +543,17 @@ class CryptoLinkReader:
             index += 1
 
         return resultDeviceList
+
+    def toDeviceList(self) -> List[CommonCryptoDev]:
+        '''输出设备列表'''
+
+        deviceList = [
+            device
+            for device in self.deviceList
+            if not device.isJump
+        ]
+
+        deviceList = self._mergeAccessSwitch(deviceList)
+        deviceList = self._parseRoomConnectedIDF(deviceList)
+
+        return deviceList

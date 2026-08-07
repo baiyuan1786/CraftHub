@@ -66,7 +66,7 @@ class 机柜接地线(Link):
                  ) -> None:
         super().__init__(2, 
                          "机柜接地线", 
-                         "原厂配套", 
+                         "ZA-BVR-50mm2,黄绿双色", 
                          startPos, 
                          endPos, 
                          1)

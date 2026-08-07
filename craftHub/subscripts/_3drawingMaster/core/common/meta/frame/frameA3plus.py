@@ -77,9 +77,12 @@ class FrameA3plus(FrameBase):
         FrameA3plus.count += 1
 
     @staticmethod
-    def legendPoint():
+    def legendPoint(t: int = 1):
         '''图例点'''
-        return Vec2(581.4463, 194.8077)
+        if t == 1:
+            return Vec2(581.4463, 194.8077)
+        else:
+            return Vec2(581.4463, 188)
     
     @staticmethod
     def introductionPoint():

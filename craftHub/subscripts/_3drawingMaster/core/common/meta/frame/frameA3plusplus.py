@@ -86,7 +86,7 @@ class FrameA3plusplus(FrameBase):
         if t == 1:
             return Vec2(787.6417, 120.9943)
         else:
-            return Vec2(787.6417, 188) # 右上角
+            return Vec2(787.6417, 183) # 右上角
     
     @staticmethod
     def connectionPoint(t: int = 1):
@@ -103,9 +103,14 @@ class FrameA3plusplus(FrameBase):
         return Vec2(430, 6.5)
     
     @staticmethod
-    def introductionPoint():
-        '''主要介绍点(左下角)'''
-        return Vec2(34.38, 10)
+    def introductionPoint(t: int = 1):
+        '''主要介绍点(左下角)/次要介绍点(右下角)'''
+        if t == 1:
+            # 主要介绍点
+            return Vec2(34.38, 10)
+        else:
+            # 次要介绍点
+            return Vec2(507, 7.5)
     
     @staticmethod
     def planePoint():
@@ -135,6 +140,26 @@ class FrameA3plusplus(FrameBase):
             return Vec2(569.7, 22.69)
         else:
             return Vec2(569.7, 22.69)
+        
+    @staticmethod
+    def GCNpanelPoint():
+        '''GCN面板图插入点'''
+        return Vec2(517.2, 49.5)
+        
+    @staticmethod
+    def cabinetPoint():
+        '''屏柜插入点'''
+        return Vec2(107, 31.5)
+    
+    @staticmethod
+    def newDevicePanelPoint():
+        '''设备面板图插入点'''
+        return Vec2(265, 11.4)
+    
+    @staticmethod
+    def frameCabinetPoint():
+        '''屏柜外框插入点'''
+        return Vec2(32.7, 11.4)
         
     def insertInto(self, layout: BlockLayout | Modelspace | Any, insertPoint: Vec2 | None = None):
         

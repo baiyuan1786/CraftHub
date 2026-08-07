@@ -90,14 +90,15 @@ class 光速寻线以太网线缆(Link):
     def __init__(self, 
                  startPos: str, 
                  endPos: str, 
-                 note: str
+                 note: str,
+                 num: int  = 1
                  ) -> None:
         super().__init__(3, # 暂时设置为 3
                          "光速寻线以太网线缆", 
                          "六类非屏蔽双绞线", 
                          startPos, 
                          endPos, 
-                         1, 
+                         num, 
                          note)    
         
 class 普通网线(Link):
@@ -113,7 +114,8 @@ class 普通网线(Link):
                          startPos, 
                          endPos, 
                          num, 
-                         note
+                         note,
+                         supply = "乙供"
                          )
         
 class 复合网线(Link):

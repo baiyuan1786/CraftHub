@@ -25,8 +25,9 @@ class CryptoDeviceType:
     NEW_EDGED_IDF = "newEdgedIDF"
     EXISTED_EDGED_IDF = "existedEdgedIDF"
     NORMAL_IDF = "normalIDF"
-    CD_PAIR = "cdPair"
+    ROOM_CONNECTED_IDF = "roomConnectedIDF"
     ACCESS_SWITCH = "accessSwitch"
+    CD_PAIR = "cdPair"
 
 
 class CommonCryptoDev(ABC):

@@ -3,7 +3,7 @@
 #   Authors:     BaiYuan <V:gzq395642104>
 ##########################################################################################################
 
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 import pandas as pd
 from pandas import DataFrame
@@ -51,8 +51,12 @@ class CableLayTableOne:
 
     DATA_KEY_GCN_PNUM = "GCNPnum"
     DATA_KEY_GCN_PNAME = "GCNPname"
-    DATA_KEY_GCN_IDF_UNIT_LIST = "GCNIDFunitList"
+    DATA_KEY_GCN_EXISTED_EDGED_IDF = "GCNexistedEdgedIDF"
+    DATA_KEY_GCN_NEW_ETH_SLOT_EDGED_IDF = "GCNnewETHslotEdgedIDF"
     DATA_KEY_GCN_TARGET_STATION_LIST = "GCNTargetStationList"
+    DATA_KEY_GCN_SLOT_LIST = "GCNSlotList"
+    DATA_KEY_GCN_ETH_SLOT_LIST = "GCNETHslotList"
+    DATA_KEY_GCN_IS_EXPANSION = "GCNisExpansion"
 
     CABINET_TYPE_NEW = "新增"
 
@@ -61,7 +65,7 @@ class CableLayTableOne:
     EXISTED_PDU_A_NAME = "本屏现有PDU A路"
     EXISTED_PDU_B_NAME = "本屏现有PDU B路"
     IDF_DEV_NAME = "IDF配线单元"
-    GCN_DEVICE_NAME = "GCN网设备"
+    GCN_DEVICE_NAME = "保底网设备"
 
     POWER_MODULE_1 = "电源模块1"
     POWER_MODULE_2 = "电源模块2"
@@ -78,9 +82,13 @@ class CableLayTableOne:
 
     TAG_JUMP = "j"
     TAG_EXISTED_EDGED_IDF = "e"
+    TAG_GCN_SLOT_OCCUPIED = "o"
+    TAG_GCN_SLOT_NEW = "n"
 
     NEW_EDGED_IDF_DEV_NAME = "新增路由器成端IDF"
     EXISTED_EDGED_IDF_DEV_NAME = "利旧成端IDF"
+    
+    CD_NUM = 2  # 加密设备连线数量
 
     def __init__(self, data: DataUnit) -> None:
         """初始化单站线缆敷设表
@@ -292,14 +300,24 @@ class CableLayTableOne:
         if not self._hasEdgedIDF(data):
             return
 
-        self.newLink(
-            普通网线(
-                startPos=self._routerPos(data),
-                endPos=self._edgedIDFPos(data),
-                note="路由器电口成端",
-                num=self.EDGED_IDF_CABLE_NUM
+        if self._hasNewEdgedIDF(data):
+            self.newLink(
+                普通网线(
+                    startPos=self._routerPos(data),
+                    endPos=self._edgedIDFPos(data),
+                    note="路由器电口成端(另外立项建设)",
+                    num=self.EDGED_IDF_CABLE_NUM
+                )
             )
-        )
+        else:
+            self.newLink(
+                普通网线(
+                    startPos=self._routerPos(data),
+                    endPos=self._edgedIDFPos(data),
+                    note="路由器电口成端(利旧)",
+                    num=self.EDGED_IDF_CABLE_NUM
+                )
+            )
 
     def _buildCryptoLink(self, data: DataUnit):
         '''构建至纵向加密连接的新增网线'''
@@ -316,18 +334,21 @@ class CableLayTableOne:
             self._addNormalNetLinkIfDifferent(
                 startPos=self._newCableStartPos(data),
                 endPos=targetPos,
-                note="至纵向加密认证装置(A平面实时)",
+                note="至纵向加密认证装置(A平面实时), 其中一条作备用",
+                num=self.CD_NUM
             )
             self._addNormalNetLinkIfDifferent(
                 startPos=self._newCableStartPos(data),
                 endPos=targetPos,
-                note="至纵向加密认证装置(A平面非实时)",
+                note="至纵向加密认证装置(A平面非实时), 其中一条作备用",
+                num=self.CD_NUM
             )
         elif data.get("rtcdDevPortList")[0] is not None:
             self._addNormalNetLinkIfDifferent(
                 startPos=self._newCableStartPos(data),
                 endPos=targetPos,
-                note="至纵向加密认证装置(A平面实时和非实时)",
+                note="至纵向加密认证装置(A平面实时和非实时), 其中一条作备用",
+                num=self.CD_NUM
             )
         else:
             return
@@ -335,25 +356,150 @@ class CableLayTableOne:
     def _buildGCNLink(self, data: DataUnit):
         '''构建至GCN网连接的新增网线'''
 
-        targetPos = self._firstGCNTargetPos(data) # 只是IDF
+        targetStationList = data.get(self.DATA_KEY_GCN_TARGET_STATION_LIST)
+        gcnSlotList = data.get(self.DATA_KEY_GCN_SLOT_LIST)
 
-        if targetPos is None:
+        if not targetStationList:
             return
 
-        targetStationList = data.get(self.DATA_KEY_GCN_TARGET_STATION_LIST)
-        
-        for targetSta in targetStationList:
+        self._checkGCNLinkData(
+            targetStationList=targetStationList,
+            gcnSlotList=gcnSlotList
+        )
+
+        for targetSta, gcnSlot in zip(targetStationList, gcnSlotList):
+            targetPos = self._gcnTargetPosBySlot(
+                data=data,
+                gcnSlot=gcnSlot
+            )
+
             self._addNormalNetLinkIfDifferent(
                 startPos=self._newCableStartPos(data),
                 endPos=targetPos,
-                note=f"至{targetSta}, GCN网链路",
+                note=f"至{targetSta}, 保底网链路",
             )
+
+    def _checkGCNLinkData(
+            self,
+            targetStationList: List,
+            gcnSlotList: List
+    ):
+        '''检查GCN链路数据'''
+
+        if gcnSlotList is None:
+            raise ValueError("GCNTargetStationList存在数据，但GCNSlotList为空")
+
+        if len(targetStationList) != len(gcnSlotList):
+            raise ValueError(
+                "GCN目标站点数量与使用板卡数量不一致: "
+                f"GCNTargetStationList={targetStationList}, "
+                f"GCNSlotList={gcnSlotList}"
+            )
+
+    def _gcnTargetPosBySlot(
+            self,
+            data: DataUnit,
+            gcnSlot
+    ) -> str:
+        '''根据GCN板卡类型获取新增线缆终点'''
+
+        if self._isGCNOccupiedSlot(data, gcnSlot):
+            existedEdgedIDF = data.get(self.DATA_KEY_GCN_EXISTED_EDGED_IDF)
+
+            if existedEdgedIDF is not None:
+                return self._gcnEdgedIDFPos(existedEdgedIDF)
+
+            return self._gcnDevicePos(data)
+
+        newETHSlotEdgedIDF = data.get(self.DATA_KEY_GCN_NEW_ETH_SLOT_EDGED_IDF)
+
+        if newETHSlotEdgedIDF is not None:
+            return self._gcnEdgedIDFPos(newETHSlotEdgedIDF)
+
+        return self._gcnDevicePos(data)
+
+    def _isGCNOccupiedSlot(
+            self,
+            data: DataUnit,
+            gcnSlot
+    ) -> bool:
+        '''判断GCN使用板卡是否为占用板卡'''
+
+        if not data.get(self.DATA_KEY_GCN_IS_EXPANSION):
+            return True
+
+        gcnETHSlotUnitDict = self._gcnETHSlotUnitDict(data)
+        slotKey = self._slotKey(gcnSlot)
+
+        if slotKey not in gcnETHSlotUnitDict:
+            raise ValueError(
+                "GCNisExpansion为True，但GCNSlotList中的板卡未在GCNETHslotList中找到: "
+                f"slot={gcnSlot}, GCNETHslotList={data.get(self.DATA_KEY_GCN_ETH_SLOT_LIST)}"
+            )
+
+        slotUnit = gcnETHSlotUnitDict[slotKey]
+
+        if slotUnit.tag == self.TAG_GCN_SLOT_OCCUPIED:
+            return True
+
+        if slotUnit.tag == self.TAG_GCN_SLOT_NEW:
+            return False
+
+        raise ValueError(
+            "GCNisExpansion为True时，GCNSlotList涉及的板卡必须在GCNETHslotList中标记<o>或<n>: "
+            f"slot={gcnSlot}, slotUnit={slotUnit}"
+        )
+
+    def _gcnETHSlotUnitDict(self, data: DataUnit) -> Dict[str, ParseUnit]:
+        '''获取GCN以太网板卡解析字典'''
+
+        gcnETHSlotList = data.get(self.DATA_KEY_GCN_ETH_SLOT_LIST)
+
+        if gcnETHSlotList is None:
+            raise ValueError("GCNisExpansion为True，但GCNETHslotList为空")
+
+        resultDict: Dict[str, ParseUnit] = {}
+
+        for rawSlot in gcnETHSlotList:
+            slotUnit = ParseUnit(str(rawSlot).strip())
+            slotKey = str(slotUnit.value).strip()
+
+            if slotKey in resultDict:
+                raise ValueError(
+                    "GCNETHslotList中存在重复板卡编号: "
+                    f"slot={slotKey}, GCNETHslotList={gcnETHSlotList}"
+                )
+
+            resultDict[slotKey] = slotUnit
+
+        return resultDict
+
+    def _slotKey(self, rawSlot) -> str:
+        '''获取板卡编号比较键'''
+
+        return str(ParseUnit(str(rawSlot).strip()).value).strip()
+    
+    def _gcnEdgedIDFPos(self, idfUnit) -> str:
+        '''获取GCN成端IDF位置'''
+
+        return self._idfPos(
+            ParseUnit(str(idfUnit).strip()).value
+        )
+        
+    def _gcnDevicePos(self, data: DataUnit) -> str:
+        '''获取GCN设备位置'''
+
+        gcnPnum = data.get(self.DATA_KEY_GCN_PNUM)
+        gcnPname = data.get(self.DATA_KEY_GCN_PNAME)
+
+        return f"{gcnPnum} {gcnPname} {self.GCN_DEVICE_NAME}"
 
     def _addNormalNetLinkIfDifferent(
             self,
             startPos: str,
             endPos: str,
             note: str,
+            num: int = 1
     ):
         '''起点终点不一致时新增普通网线'''
 
@@ -362,6 +508,7 @@ class CableLayTableOne:
                 startPos=startPos,
                 endPos=endPos,
                 note=note,
+                num=num
             )
         )
         
@@ -421,12 +568,13 @@ class CableLayTableOne:
         return None
 
     def _firstGCNTargetPos(self, data: DataUnit) -> Optional[str]:
-        '''获取GCN网第一个新增线缆终点'''
+        '''获取GCN网第一个新增线缆终点
+        如果GCN成端IDF存在，使用对应成端IDF，否则使用保底网屏'''
 
-        idfUnitList = data.get(self.DATA_KEY_GCN_IDF_UNIT_LIST)
+        idfUnit = data.get(self.DATA_KEY_GCN_EXISTED_EDGED_IDF)
 
-        if len(idfUnitList) > 0:
-            return self._idfPos(str(idfUnitList[0]))
+        if idfUnit is not None:
+            return self._idfPos(idfUnit)
 
         gcnPnum = data.get(self.DATA_KEY_GCN_PNUM)
         gcnPname = data.get(self.DATA_KEY_GCN_PNAME)
